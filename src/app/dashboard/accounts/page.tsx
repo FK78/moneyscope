@@ -29,7 +29,7 @@ const typeConfig: Record<string, { label: string; variant: "default" | "secondar
   investment: { label: "Investment", variant: "outline" },
 };
 
-const typeIcons: Record<string, typeof Wallet> = {
+export const typeIcons: Record<string, typeof Wallet> = {
   checking: Wallet,
   savings: PiggyBank,
   credit_card: CreditCard,
