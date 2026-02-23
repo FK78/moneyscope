@@ -21,7 +21,7 @@ function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(Math.abs(amount));
+  }).format(amount);
 }
 
 function formatDate(date: string | null) {
@@ -37,11 +37,11 @@ export default async function Transactions() {
   const transactions = await getTransactionsWithDetails(1);
 
   const totalIncome = transactions
-    .filter((t) => t.amount > 0)
+    .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions
-    .filter((t) => t.amount < 0)
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
@@ -138,12 +138,12 @@ export default async function Transactions() {
                       {formatDate(transaction.date)}
                     </TableCell>
                     <TableCell
-                      className={`text-right font-semibold tabular-nums ${transaction.amount >= 0
+                      className={`text-right font-semibold tabular-nums ${transaction.type === "income"
                         ? "text-emerald-600"
                         : "text-red-600"
                         }`}
                     >
-                      {transaction.amount >= 0 ? "+" : "−"}
+                      {transaction.type === "income" ? "+" : "−"}
                       {formatCurrency(transaction.amount)}
                     </TableCell>
                     <TableCell>

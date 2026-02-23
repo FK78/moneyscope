@@ -2,6 +2,7 @@ import { boolean, date, integer, pgEnum, pgTable, real, time, varchar } from "dr
 
 export const accountTypeEnum = pgEnum("account_type", ["checking", "savings", "credit_card", "investment"]);
 export const periodEnum = pgEnum("period", ["monthly", "weekly"]);
+export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
 
 export const usersTable = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
@@ -33,6 +34,7 @@ export const transactionsTable = pgTable("transactions", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   account_id: integer("account_id").references(() => accountsTable.id),
   category_id: integer("category_id").references(() => categoriesTable.id),
+  type: transactionTypeEnum().notNull(),
   amount: real().notNull(),
   description: varchar({ length: 255 }).notNull(),
   date: date(),

@@ -6,6 +6,7 @@ export async function getTransactionsWithDetails(userId: number) {
   return await db.select({
     id: transactionsTable.id,
     accountName: accountsTable.name,
+    type: transactionsTable.type,
     amount: transactionsTable.amount,
     category: categoriesTable.name,
     description: transactionsTable.description,
