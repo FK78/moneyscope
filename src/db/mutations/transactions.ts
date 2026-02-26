@@ -41,3 +41,8 @@ export async function editTransaction(formData: FormData) {
   revalidatePath('/dashboard/transactions');
   return result;
 }
+
+export async function deleteTransaction(id: number) {
+  await db.delete(transactionsTable).where(eq(transactionsTable.id, id));
+  revalidatePath('/dashboard/transactions');
+}

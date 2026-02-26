@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useTransition } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { TransactionFormDialog } from "@/components/AddTransactionForm";
 import {
   Table,
@@ -18,7 +24,82 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDownLeft, ArrowUpRight, Receipt, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ArrowDownLeft, ArrowUpRight, CheckCircle2, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
+import { deleteTransaction } from "@/db/mutations/transactions";
+
+function DeleteTransactionButton({
+  transaction,
+  onDeleted,
+  onDeleteFailed,
+}: {
+  transaction: Transaction;
+  onDeleted: (description: string) => void;
+  onDeleteFailed: () => void;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function handleDelete() {
+    startTransition(async () => {
+      try {
+        const desc = transaction.description;
+        await deleteTransaction(transaction.id);
+        onDeleted(desc);
+      } catch {
+        onDeleteFailed();
+      } finally {
+        setConfirming(false);
+      }
+    });
+  }
+
+  return (
+    <AlertDialog open={confirming} onOpenChange={setConfirming}>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete &ldquo;{transaction.description}&rdquo;. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-white hover:bg-destructive/90"
+            disabled={isPending}
+            onClick={(e) => {
+              e.preventDefault();
+              handleDelete();
+            }}
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 type Transaction = {
   id: number;
@@ -62,6 +143,7 @@ export function TransactionsClient({
   categories: Category[];
 }) {
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
+  const [deleteResult, setDeleteResult] = useState<{ status: "success" | "error"; description?: string } | null>(null);
 
   useEffect(() => {
     if (highlightedIds.size === 0) return;
@@ -217,6 +299,11 @@ export function TransactionsClient({
                           categories={categories}
                           onSaved={(ids) => handleTransactionEdited(ids[0])}
                         />
+                        <DeleteTransactionButton
+                          transaction={transaction}
+                          onDeleted={(desc) => setDeleteResult({ status: "success", description: desc })}
+                          onDeleteFailed={() => setDeleteResult({ status: "error" })}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -226,6 +313,39 @@ export function TransactionsClient({
           )}
         </CardContent>
       </Card>
+      <Dialog open={deleteResult !== null} onOpenChange={(open) => !open && setDeleteResult(null)}>
+        <DialogContent showCloseButton={false} className="sm:max-w-sm">
+          <DialogHeader className="sr-only">
+            <DialogTitle>
+              {deleteResult?.status === "success" ? "Transaction deleted" : "Delete failed"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-6">
+            {deleteResult?.status === "success" ? (
+              <>
+                <CheckCircle2 className="h-12 w-12 text-emerald-500" />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">Transaction deleted</h3>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    &ldquo;{deleteResult.description}&rdquo; has been removed.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-12 w-12 text-destructive" />
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold">Delete failed</h3>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Something went wrong. Please try again.
+                  </p>
+                </div>
+              </>
+            )}
+            <Button onClick={() => setDeleteResult(null)}>Done</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
