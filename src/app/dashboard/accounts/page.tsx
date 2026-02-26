@@ -14,7 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { getAccountsWithDetails } from "@/db/queries/accounts";
-import { AddAccountForm } from "@/components/AddAccountForm";
+import { AccountFormDialog } from "@/components/AddAccountForm";
 import { formatCurrency } from "@/lib/formatCurrency";
 
 const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -52,7 +52,7 @@ export default async function Accounts() {
             Manage and monitor all your linked accounts.
           </p>
         </div>
-        <AddAccountForm />
+        <AccountFormDialog />
       </div>
 
       {/* Summary row */}
@@ -123,7 +123,10 @@ export default async function Accounts() {
                     </CardDescription>
                   </div>
                 </div>
-                <Badge variant={config.variant}>{config.label}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={config.variant}>{config.label}</Badge>
+                  <AccountFormDialog account={account} />
+                </div>
               </CardHeader>
               <CardContent>
                 <p

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, Pencil, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,9 +21,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { addAccount } from "@/db/mutations/accounts";
+import { addAccount, editAccount } from "@/db/mutations/accounts";
 
-export function AddAccountForm() {
+type Account = {
+  id: number;
+  accountName: string;
+  type: string | null;
+  balance: number;
+  currency: string;
+};
+
+export function AccountFormDialog({ account }: { account?: Account } = {}) {
+  const isEdit = !!account;
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"form" | "success">("form");
   const [isPending, startTransition] = useTransition();
@@ -40,7 +49,11 @@ export function AddAccountForm() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
-      await addAccount(formData);
+      if (isEdit) {
+        await editAccount(account.id, formData);
+      } else {
+        await addAccount(formData);
+      }
       setView("success");
     });
   }
@@ -53,10 +66,16 @@ export function AddAccountForm() {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4" />
-          Add Account
-        </Button>
+        {isEdit ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button size="sm">
+            <Plus className="h-4 w-4" />
+            Add Account
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         {view === "success" ? (
@@ -64,26 +83,30 @@ export function AddAccountForm() {
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Account added!</h3>
+                <h3 className="text-lg font-semibold">
+                  {isEdit ? "Account updated!" : "Account added!"}
+                </h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Your new account has been created.
+                  {isEdit ? "Your account has been updated." : "Your new account has been created."}
                 </p>
               </div>
             </div>
             <DialogFooter className="flex gap-2 sm:justify-center">
-              <Button variant="outline" onClick={handleAddAnother}>
-                <Plus className="mr-1 h-4 w-4" />
-                Add Another
-              </Button>
+              {!isEdit && (
+                <Button variant="outline" onClick={handleAddAnother}>
+                  <Plus className="mr-1 h-4 w-4" />
+                  Add Another
+                </Button>
+              )}
               <Button onClick={() => handleOpenChange(false)}>Done</Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Add Account</DialogTitle>
+              <DialogTitle>{isEdit ? "Edit Account" : "Add Account"}</DialogTitle>
               <DialogDescription>
-                Enter the details for a new account.
+                {isEdit ? "Update the account details." : "Enter the details for a new account."}
               </DialogDescription>
             </DialogHeader>
             <form
@@ -98,6 +121,7 @@ export function AddAccountForm() {
                   id="name"
                   name="name"
                   placeholder="e.g. Main Checking"
+                  defaultValue={account?.accountName ?? ""}
                   required
                 />
               </div>
@@ -105,7 +129,7 @@ export function AddAccountForm() {
               {/* Type */}
               <div className="grid gap-2">
                 <Label htmlFor="type">Type</Label>
-                <Select name="type" defaultValue="checking">
+                <Select name="type" defaultValue={account?.type ?? "checking"}>
                   <SelectTrigger id="type">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -126,7 +150,7 @@ export function AddAccountForm() {
                   name="balance"
                   type="number"
                   step="0.01"
-                  defaultValue="0.00"
+                  defaultValue={account?.balance?.toString() ?? "0.00"}
                   placeholder="0.00"
                   required
                 />
@@ -135,7 +159,7 @@ export function AddAccountForm() {
               {/* Currency */}
               <div className="grid gap-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Select name="currency" defaultValue="USD">
+                <Select name="currency" defaultValue={account?.currency ?? "USD"}>
                   <SelectTrigger id="currency">
                     <SelectValue placeholder="Select currency" />
                   </SelectTrigger>
@@ -154,7 +178,7 @@ export function AddAccountForm() {
                 </Button>
                 <Button type="submit" disabled={isPending}>
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Add Account
+                  {isEdit ? "Save Changes" : "Add Account"}
                 </Button>
               </DialogFooter>
             </form>
