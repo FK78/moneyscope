@@ -124,3 +124,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes highlight-row {
+  0% {
+    background-color: oklch(0.93 0.1 155);
+  }
+  70% {
+    background-color: oklch(0.93 0.1 155);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-highlight-row {
+  animation: highlight-row 3s ease-out forwards;
+}
