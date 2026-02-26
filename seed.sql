@@ -27,7 +27,37 @@ INSERT INTO categories (user_id, name, color, icon, is_default) VALUES
   (3, 'Groceries', '#4CAF50', 'shopping-cart', true),
   (3, 'Salary', '#2196F3', 'briefcase', true);
 
--- Transactions for Alice (user 1)
+-- January transactions for Alice (user 1)
+INSERT INTO transactions (account_id, category_id, type, amount, description, date, is_recurring, recurring_pattern) VALUES
+  (1, 3, 'income', 3500.00, 'Monthly salary', '2026-01-01', true, 'monthly'),
+  (1, 1, 'expense', 72.60, 'Whole Foods groceries', '2026-01-04', false, NULL),
+  (1, 4, 'expense', 38.00, 'Dinner at Chilis', '2026-01-06', false, NULL),
+  (1, 5, 'expense', 22.00, 'Lyft to downtown', '2026-01-07', false, NULL),
+  (3, 1, 'expense', 58.90, 'Trader Joes weekly shop', '2026-01-10', false, NULL),
+  (1, 6, 'expense', 115.00, 'Electric bill', '2026-01-11', true, 'monthly'),
+  (1, 2, 'expense', 1800.00, 'January rent', '2026-01-01', true, 'monthly'),
+  (1, 4, 'expense', 24.00, 'Coffee and pastries', '2026-01-14', false, NULL),
+  (1, 5, 'expense', 48.00, 'Gas station fill-up', '2026-01-16', false, NULL),
+  (1, 1, 'expense', 105.20, 'Costco bulk shopping', '2026-01-18', false, NULL),
+  (1, 6, 'expense', 75.00, 'Internet bill', '2026-01-20', true, 'monthly'),
+  (2, 3, 'income', 350.00, 'Freelance payment', '2026-01-22', false, NULL),
+  (2, 3, 'income', 400.00, 'Transfer to savings', '2026-01-25', false, NULL),
+
+-- January transactions for Bob (user 2)
+  (4, 8, 'income', 4200.00, 'Bi-weekly paycheck', '2026-01-01', true, 'monthly'),
+  (4, 7, 'expense', 95.00, 'Weekly groceries', '2026-01-05', false, NULL),
+  (4, 9, 'expense', 18.99, 'Netflix + Spotify', '2026-01-06', true, 'monthly'),
+  (4, 7, 'expense', 40.00, 'Farmers market', '2026-01-12', false, NULL),
+  (4, 8, 'income', 4200.00, 'Bi-weekly paycheck', '2026-01-15', true, 'monthly'),
+  (4, 7, 'expense', 88.50, 'Grocery haul', '2026-01-19', false, NULL),
+
+-- January transactions for Carol (user 3)
+  (6, 11, 'income', 3200.00, 'Monthly salary', '2026-01-01', true, 'monthly'),
+  (6, 10, 'expense', 65.00, 'Tesco weekly shop', '2026-01-03', false, NULL),
+  (6, 10, 'expense', 48.70, 'Sainsburys groceries', '2026-01-10', false, NULL),
+  (6, 10, 'expense', 59.80, 'Waitrose shop', '2026-01-17', false, NULL);
+
+-- February transactions for Alice (user 1)
 INSERT INTO transactions (account_id, category_id, type, amount, description, date, is_recurring, recurring_pattern) VALUES
   (1, 3, 'income', 3500.00, 'Monthly salary', '2026-02-01', true, 'monthly'),
   (1, 1, 'expense', 85.40, 'Whole Foods groceries', '2026-02-03', false, NULL),
@@ -42,6 +72,7 @@ INSERT INTO transactions (account_id, category_id, type, amount, description, da
   (3, 4, 'expense', 35.00, 'Sushi takeout', '2026-02-17', false, NULL),
   (1, 6, 'expense', 75.00, 'Internet bill', '2026-02-18', true, 'monthly'),
   (2, 3, 'income', 500.00, 'Freelance payment', '2026-02-19', false, NULL),
+  (2, 3, 'income', 600.00, 'Transfer to savings', '2026-02-20', false, NULL),
 
 -- Transactions for Bob (user 2)
   (4, 8, 'income', 4200.00, 'Bi-weekly paycheck', '2026-02-01', true, 'monthly'),
