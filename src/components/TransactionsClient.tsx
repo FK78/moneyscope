@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { AddTransactionForm } from "@/components/AddTransactionForm";
+import { TransactionFormDialog } from "@/components/AddTransactionForm";
 import {
   Table,
   TableBody,
@@ -23,9 +23,11 @@ import { ArrowDownLeft, ArrowUpRight, Receipt, RefreshCw } from "lucide-react";
 type Transaction = {
   id: number;
   accountName: string;
+  account_id: number | null;
   type: "income" | "expense" | null;
   amount: number;
   category: string;
+  category_id: number | null;
   description: string;
   date: string | null;
   is_recurring: boolean;
@@ -73,6 +75,10 @@ export function TransactionsClient({
     setHighlightedIds(new Set(ids));
   }, []);
 
+  const handleTransactionEdited = useCallback((id: number) => {
+    setHighlightedIds(new Set([id]));
+  }, []);
+
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
@@ -89,10 +95,10 @@ export function TransactionsClient({
             Review and manage your recent financial activity.
           </p>
         </div>
-        <AddTransactionForm
+        <TransactionFormDialog
           accounts={accounts}
           categories={categories}
-          onTransactionsAdded={handleTransactionsAdded}
+          onSaved={handleTransactionsAdded}
         />
       </div>
 
@@ -198,12 +204,20 @@ export function TransactionsClient({
                       {formatCurrency(transaction.amount)}
                     </TableCell>
                     <TableCell>
-                      {transaction.is_recurring && (
-                        <Badge variant="secondary" className="gap-1">
-                          <RefreshCw className="h-3 w-3" />
-                          Recurring
-                        </Badge>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {transaction.is_recurring && (
+                          <Badge variant="secondary" className="gap-1">
+                            <RefreshCw className="h-3 w-3" />
+                            Recurring
+                          </Badge>
+                        )}
+                        <TransactionFormDialog
+                          transaction={transaction}
+                          accounts={accounts}
+                          categories={categories}
+                          onSaved={(ids) => handleTransactionEdited(ids[0])}
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

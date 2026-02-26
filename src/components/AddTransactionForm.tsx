@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, Pencil, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,32 +21,50 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { addTransaction } from "@/db/mutations/transactions";
+import { addTransaction, editTransaction } from "@/db/mutations/transactions";
+
+type Transaction = {
+  id: number;
+  accountName: string;
+  account_id: number | null;
+  type: "income" | "expense" | null;
+  amount: number;
+  category: string;
+  category_id: number | null;
+  description: string;
+  date: string | null;
+  is_recurring: boolean;
+};
 
 type Account = { id: number; accountName: string };
 type Category = { id: number; name: string };
 
-export function AddTransactionForm({
+export function TransactionFormDialog({
+  transaction,
   accounts,
   categories,
-  onTransactionsAdded,
+  onSaved,
 }: {
+  transaction?: Transaction;
   accounts: Account[];
   categories: Category[];
-  onTransactionsAdded?: (ids: number[]) => void;
+  onSaved?: (ids: number[]) => void;
 }) {
+  const isEdit = !!transaction;
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"form" | "success">("form");
-  const [createdIds, setCreatedIds] = useState<number[]>([]);
+  const [savedIds, setSavedIds] = useState<number[]>([]);
   const [isPending, startTransition] = useTransition();
   const [formKey, setFormKey] = useState(0);
 
+  const today = new Date().toISOString().split("T")[0];
+
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      if (createdIds.length > 0) {
-        onTransactionsAdded?.(createdIds);
+      if (savedIds.length > 0) {
+        onSaved?.(savedIds);
       }
-      setCreatedIds([]);
+      setSavedIds([]);
       setView("form");
     }
     setOpen(nextOpen);
@@ -55,9 +73,14 @@ export function AddTransactionForm({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    if (isEdit) {
+      formData.set("id", String(transaction.id));
+    }
     startTransition(async () => {
-      const result = await addTransaction(formData);
-      setCreatedIds((prev) => [...prev, result.id]);
+      const result = isEdit
+        ? await editTransaction(formData)
+        : await addTransaction(formData);
+      setSavedIds((prev) => [...prev, result.id]);
       setView("success");
     });
   }
@@ -70,10 +93,16 @@ export function AddTransactionForm({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4" />
-          Add Transaction
-        </Button>
+        {isEdit ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button size="sm">
+            <Plus className="h-4 w-4" />
+            Add Transaction
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         {view === "success" ? (
@@ -81,28 +110,36 @@ export function AddTransactionForm({
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Transaction added!</h3>
+                <h3 className="text-lg font-semibold">
+                  {isEdit ? "Transaction updated!" : "Transaction added!"}
+                </h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  {createdIds.length === 1
-                    ? "Your transaction has been recorded."
-                    : `${createdIds.length} transactions added in this session.`}
+                  {isEdit
+                    ? "Your changes have been saved."
+                    : savedIds.length === 1
+                      ? "Your transaction has been recorded."
+                      : `${savedIds.length} transactions added in this session.`}
                 </p>
               </div>
             </div>
             <DialogFooter className="flex gap-2 sm:justify-center">
-              <Button variant="outline" onClick={handleAddAnother}>
-                <Plus className="mr-1 h-4 w-4" />
-                Add Another
-              </Button>
+              {!isEdit && (
+                <Button variant="outline" onClick={handleAddAnother}>
+                  <Plus className="mr-1 h-4 w-4" />
+                  Add Another
+                </Button>
+              )}
               <Button onClick={() => handleOpenChange(false)}>Done</Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Add Transaction</DialogTitle>
+              <DialogTitle>{isEdit ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
               <DialogDescription>
-                Enter the details for a new transaction.
+                {isEdit
+                  ? "Update the details for this transaction."
+                  : "Enter the details for a new transaction."}
               </DialogDescription>
             </DialogHeader>
             <form
@@ -113,7 +150,7 @@ export function AddTransactionForm({
               {/* Type */}
               <div className="grid gap-2">
                 <Label htmlFor="type">Type</Label>
-                <Select name="type" defaultValue="expense">
+                <Select name="type" defaultValue={transaction?.type ?? "expense"}>
                   <SelectTrigger id="type">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
@@ -130,6 +167,7 @@ export function AddTransactionForm({
                 <Input
                   id="description"
                   name="description"
+                  defaultValue={transaction?.description}
                   placeholder="e.g. Grocery shopping"
                   required
                 />
@@ -144,6 +182,7 @@ export function AddTransactionForm({
                   type="number"
                   step="0.01"
                   min="0.01"
+                  defaultValue={transaction?.amount}
                   placeholder="0.00"
                   required
                 />
@@ -152,7 +191,7 @@ export function AddTransactionForm({
               {/* Account */}
               <div className="grid gap-2">
                 <Label htmlFor="account_id">Account</Label>
-                <Select name="account_id">
+                <Select name="account_id" defaultValue={transaction?.account_id != null ? String(transaction.account_id) : undefined}>
                   <SelectTrigger id="account_id">
                     <SelectValue placeholder="Select account" />
                   </SelectTrigger>
@@ -169,7 +208,7 @@ export function AddTransactionForm({
               {/* Category */}
               <div className="grid gap-2">
                 <Label htmlFor="category_id">Category</Label>
-                <Select name="category_id">
+                <Select name="category_id" defaultValue={transaction?.category_id != null ? String(transaction.category_id) : undefined}>
                   <SelectTrigger id="category_id">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -190,8 +229,8 @@ export function AddTransactionForm({
                   id="date"
                   name="date"
                   type="date"
-                  max={new Date().toISOString().split("T")[0]}
-                  defaultValue={new Date().toISOString().split("T")[0]}
+                  max={today}
+                  defaultValue={transaction?.date ?? today}
                   required
                 />
               </div>
@@ -199,7 +238,7 @@ export function AddTransactionForm({
               {/* Recurring */}
               <div className="grid gap-2">
                 <Label htmlFor="is_recurring">Recurring</Label>
-                <Select name="is_recurring" defaultValue="false">
+                <Select name="is_recurring" defaultValue={String(transaction?.is_recurring ?? false)}>
                   <SelectTrigger id="is_recurring">
                     <SelectValue placeholder="Is this recurring?" />
                   </SelectTrigger>
@@ -216,7 +255,7 @@ export function AddTransactionForm({
                 </Button>
                 <Button type="submit" disabled={isPending}>
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Add Transaction
+                  {isEdit ? "Save Changes" : "Add Transaction"}
                 </Button>
               </DialogFooter>
             </form>

@@ -15,9 +15,11 @@ function getMonthRange(monthsAgo = 0) {
 const transactionSelect = {
   id: transactionsTable.id,
   accountName: accountsTable.name,
+  account_id: transactionsTable.account_id,
   type: transactionsTable.type,
   amount: transactionsTable.amount,
   category: categoriesTable.name,
+  category_id: transactionsTable.category_id,
   description: transactionsTable.description,
   date: transactionsTable.date,
   is_recurring: transactionsTable.is_recurring,
