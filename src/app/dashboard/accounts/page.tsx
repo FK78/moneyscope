@@ -14,6 +14,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { getAccountsWithDetails } from "@/db/queries/accounts";
+import { AddAccountForm } from "@/components/AddAccountForm";
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("en-US", {
@@ -50,11 +51,14 @@ export default async function Accounts() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Manage and monitor all your linked accounts.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Manage and monitor all your linked accounts.
+          </p>
+        </div>
+        <AddAccountForm />
       </div>
 
       {/* Summary row */}
