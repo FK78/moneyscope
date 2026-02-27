@@ -15,7 +15,8 @@ import {
 import { getBudgets } from "@/db/queries/budgets";
 import { getCategoriesByUser } from "@/db/queries/categories";
 import { formatCurrency } from "@/lib/formatCurrency";
-import { AddBudgetForm } from "@/components/AddBudgetForm";
+import { BudgetFormDialog } from "@/components/AddBudgetForm";
+import { DeleteBudgetButton } from "@/components/DeleteBudgetButton";
 
 export default async function Budgets() {
   const [budgets, categories] = await Promise.all([
@@ -36,7 +37,7 @@ export default async function Budgets() {
             Track your spending against monthly budgets.
           </p>
         </div>
-        <AddBudgetForm categories={categories} />
+        <BudgetFormDialog categories={categories} />
       </div>
 
       {/* Summary */}
@@ -124,17 +125,21 @@ export default async function Budgets() {
                   />
                   <CardTitle className="text-base">{budget.budgetCategory}</CardTitle>
                 </div>
-                <Badge
-                  variant={
-                    isOver
-                      ? "destructive"
-                      : isNear
-                        ? "outline"
-                        : "secondary"
-                  }
-                >
-                  {isOver ? "Over" : isNear ? "Almost" : "On track"}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <Badge
+                    variant={
+                      isOver
+                        ? "destructive"
+                        : isNear
+                          ? "outline"
+                          : "secondary"
+                    }
+                  >
+                    {isOver ? "Over" : isNear ? "Almost" : "On track"}
+                  </Badge>
+                  <BudgetFormDialog categories={categories} budget={budget} />
+                  <DeleteBudgetButton budget={budget} />
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-baseline justify-between">
