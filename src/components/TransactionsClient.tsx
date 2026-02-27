@@ -27,6 +27,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +48,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDownLeft, ArrowUpDown, ArrowUpRight, CheckCircle2, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
+import { ArrowDownLeft, ArrowUpDown, ArrowUpRight, CheckCircle2, Download, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { deleteTransaction } from "@/db/mutations/transactions";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { TransactionsInsightsCharts } from "@/components/TransactionsInsightsCharts";
@@ -144,6 +145,19 @@ function getPageHref(page: number) {
   return page <= 1 ? "/dashboard/transactions" : `/dashboard/transactions?page=${page}`;
 }
 
+function formatDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
 export function TransactionsClient({
   transactions,
   accounts,
@@ -169,7 +183,12 @@ export function TransactionsClient({
   const [deleteResult, setDeleteResult] = useState<{ status: "success" | "error"; description?: string } | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [exportStartDate, setExportStartDate] = useState(() => formatDateInput(addDays(new Date(), -30)));
+  const [exportEndDate, setExportEndDate] = useState(() => formatDateInput(new Date()));
   const canCreateTransaction = accounts.length > 0 && categories.length > 0;
+  const isExportRangeValid = exportStartDate !== ""
+    && exportEndDate !== ""
+    && exportStartDate <= exportEndDate;
   const resolvedCurrentPage = totalTransactions > 0 ? currentPage : 1;
   const totalPages = Math.max(1, Math.ceil(totalTransactions / pageSize));
   const startIndex = totalTransactions > 0 ? (resolvedCurrentPage - 1) * pageSize + 1 : 0;
@@ -192,6 +211,18 @@ export function TransactionsClient({
   const handleTransactionEdited = useCallback((id: number) => {
     setHighlightedIds(new Set([id]));
   }, []);
+
+  const handleExportCsv = useCallback(() => {
+    if (!isExportRangeValid) {
+      return;
+    }
+
+    const params = new URLSearchParams({
+      startDate: exportStartDate,
+      endDate: exportEndDate,
+    });
+    window.location.href = `/dashboard/transactions/export?${params.toString()}`;
+  }, [exportEndDate, exportStartDate, isExportRangeValid]);
 
   const columns = useMemo<ColumnDef<Transaction>[]>(() => ([
     {
@@ -430,6 +461,44 @@ export function TransactionsClient({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-6 rounded-lg border bg-muted/20 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="csv-export-start-date">From</Label>
+                  <Input
+                    id="csv-export-start-date"
+                    type="date"
+                    value={exportStartDate}
+                    onChange={(event) => setExportStartDate(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="csv-export-end-date">To</Label>
+                  <Input
+                    id="csv-export-end-date"
+                    type="date"
+                    value={exportEndDate}
+                    onChange={(event) => setExportEndDate(event.target.value)}
+                  />
+                </div>
+              </div>
+              <Button
+                type="button"
+                onClick={handleExportCsv}
+                disabled={!isExportRangeValid}
+                className="sm:ml-3"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export CSV
+              </Button>
+            </div>
+            {!isExportRangeValid && (
+              <p className="text-destructive mt-2 text-xs">
+                The start date must be on or before the end date.
+              </p>
+            )}
+          </div>
           {transactions.length === 0 ? (
             totalTransactions === 0 ? (
               <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">

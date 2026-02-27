@@ -1,6 +1,6 @@
 import { db } from '@/index';
 import { transactionsTable, categoriesTable, accountsTable } from '@/db/schema';
-import { and, desc, eq, ne, sql, sum, gte, lt } from 'drizzle-orm';
+import { and, desc, eq, ne, sql, sum, gte, lte, lt } from 'drizzle-orm';
 
 function getMonthRange(monthsAgo = 0) {
   const now = new Date();
@@ -36,6 +36,46 @@ function baseTransactionsQuery(userId: string) {
 
 export async function getTransactionsWithDetails(userId: string) {
   return await baseTransactionsQuery(userId).orderBy(desc(transactionsTable.date));
+}
+
+export type ExportTransaction = {
+  id: number;
+  date: string | null;
+  type: 'income' | 'expense' | null;
+  amount: number;
+  description: string;
+  accountName: string;
+  category: string;
+  isRecurring: boolean;
+};
+
+export async function getTransactionsForExport(
+  userId: string,
+  startDate: string,
+  endDate: string,
+): Promise<ExportTransaction[]> {
+  return await db
+    .select({
+      id: transactionsTable.id,
+      date: transactionsTable.date,
+      type: transactionsTable.type,
+      amount: transactionsTable.amount,
+      description: transactionsTable.description,
+      accountName: accountsTable.name,
+      category: categoriesTable.name,
+      isRecurring: transactionsTable.is_recurring,
+    })
+    .from(transactionsTable)
+    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
+    .innerJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
+    .where(
+      and(
+        eq(accountsTable.user_id, userId),
+        gte(transactionsTable.date, startDate),
+        lte(transactionsTable.date, endDate),
+      ),
+    )
+    .orderBy(desc(transactionsTable.date), desc(transactionsTable.id));
 }
 
 export async function getTransactionsCount(userId: string) {
