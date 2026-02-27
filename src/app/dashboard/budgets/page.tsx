@@ -17,6 +17,7 @@ import { getCategoriesByUser } from "@/db/queries/categories";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { BudgetFormDialog } from "@/components/AddBudgetForm";
 import { DeleteBudgetButton } from "@/components/DeleteBudgetButton";
+import { getCategoryIcon } from "@/lib/categoryIcons";
 
 export default async function Budgets() {
   const [budgets, categories] = await Promise.all([
@@ -114,15 +115,25 @@ export default async function Budgets() {
           const remaining = budget.budgetAmount - budget.budgetSpent;
           const isOver = budget.budgetSpent > budget.budgetAmount;
           const isNear = percent >= 80 && !isOver;
+          const Icon = getCategoryIcon(budget.budgetIcon);
 
           return (
             <Card key={budget.id}>
               <CardHeader className="flex flex-row items-start justify-between pb-3">
                 <div className="flex items-center gap-2">
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: budget.budgetColor }}
-                  />
+                  {Icon ? (
+                    <div
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                      style={{ backgroundColor: budget.budgetColor + "20" }}
+                    >
+                      <Icon className="h-3.5 w-3.5" style={{ color: budget.budgetColor }} />
+                    </div>
+                  ) : (
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: budget.budgetColor }}
+                    />
+                  )}
                   <CardTitle className="text-base">{budget.budgetCategory}</CardTitle>
                 </div>
                 <div className="flex items-center gap-1">
