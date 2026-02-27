@@ -160,23 +160,50 @@ export default async function Budgets() {
             const Icon = getCategoryIcon(budget.budgetIcon);
 
             return (
-              <Card key={budget.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2">
-                    {Icon ? (
-                      <div
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: budget.budgetColor + "20" }}
-                      >
-                        <Icon className="h-3.5 w-3.5" style={{ color: budget.budgetColor }} />
+              <Card key={budget.id} className="relative overflow-hidden">
+                <div className="p-5 space-y-4">
+                  {/* Header: icon + name + actions */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {Icon ? (
+                        <div
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                          style={{ backgroundColor: budget.budgetColor + "15" }}
+                        >
+                          <Icon className="h-4 w-4" style={{ color: budget.budgetColor }} />
+                        </div>
+                      ) : (
+                        <div
+                          className="h-9 w-9 shrink-0 rounded-lg"
+                          style={{ backgroundColor: budget.budgetColor + "15" }}
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold truncate">{budget.budgetCategory}</h3>
+                        <p className="text-[11px] text-muted-foreground capitalize">{budget.budgetPeriod} budget</p>
                       </div>
-                    ) : (
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: budget.budgetColor }}
+                    </div>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                      <BudgetAlertSettings
+                        budgetId={budget.id}
+                        budgetCategory={budget.budgetCategory}
+                        prefs={alertPrefsMap.get(budget.id) ?? null}
                       />
-                    )}
-                    <CardTitle className="text-base">{budget.budgetCategory}</CardTitle>
+                      <BudgetFormDialog categories={categories} budget={budget} />
+                      <DeleteBudgetButton budget={budget} />
+                    </div>
+                  </div>
+
+                  {/* Amounts */}
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-2xl font-bold tabular-nums tracking-tight">
+                        {formatCurrency(budget.budgetSpent, baseCurrency)}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        of {formatCurrency(budget.budgetAmount, baseCurrency)}
+                      </p>
+                    </div>
                     <Badge
                       variant={
                         isOver
@@ -185,65 +212,43 @@ export default async function Budgets() {
                             ? "outline"
                             : "secondary"
                       }
-                      className="text-[10px] px-1.5 py-0"
                     >
                       {isOver ? "Over" : isNear ? "Almost" : "On track"}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-0.5 -ml-1.5">
-                    <BudgetAlertSettings
-                      budgetId={budget.id}
-                      budgetCategory={budget.budgetCategory}
-                      prefs={alertPrefsMap.get(budget.id) ?? null}
-                    />
-                    <BudgetFormDialog categories={categories} budget={budget} />
-                    <DeleteBudgetButton budget={budget} />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-2xl font-bold tabular-nums">
-                      {formatCurrency(budget.budgetSpent, baseCurrency)}
-                    </span>
-                    <span className="text-muted-foreground text-sm">
-                      of {formatCurrency(budget.budgetAmount, baseCurrency)}
-                    </span>
-                  </div>
 
                   {/* Progress bar */}
-                  <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
-                    <div
-                      className={`h-full rounded-full transition-all ${isOver
-                          ? "bg-red-500"
-                          : isNear
-                            ? "bg-orange-500"
-                            : "bg-emerald-500"
+                  <div>
+                    <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          isOver
+                            ? "bg-red-500"
+                            : isNear
+                              ? "bg-orange-500"
+                              : "bg-emerald-500"
                         }`}
-                      style={{ width: `${percent}%` }}
-                    />
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between mt-1.5 text-xs">
+                      <span className="text-muted-foreground tabular-nums">
+                        {percent.toFixed(0)}% used
+                      </span>
+                      <span
+                        className={`tabular-nums ${
+                          isOver
+                            ? "font-medium text-red-600"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {isOver
+                          ? `${formatCurrency(Math.abs(remaining), baseCurrency)} over`
+                          : `${formatCurrency(remaining, baseCurrency)} left`}
+                      </span>
+                    </div>
                   </div>
-
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {percent.toFixed(0)}% used
-                    </span>
-                    <span
-                      className={
-                        isOver
-                          ? "font-medium text-red-600"
-                          : "text-muted-foreground"
-                      }
-                    >
-                      {isOver
-                        ? `${formatCurrency(Math.abs(remaining), baseCurrency)} over`
-                        : `${formatCurrency(remaining, baseCurrency)} left`}
-                    </span>
-                  </div>
-
-                  <p className="text-muted-foreground text-xs capitalize">
-                    {budget.budgetPeriod} budget
-                  </p>
-                </CardContent>
+                </div>
               </Card>
             );
           })}
