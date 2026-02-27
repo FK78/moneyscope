@@ -107,6 +107,11 @@ export function TransactionFormDialog({
       <DialogContent className="sm:max-w-md">
         {view === "success" ? (
           <>
+            <DialogHeader className="sr-only">
+              <DialogTitle>
+                {isEdit ? "Transaction updated" : "Transaction added"}
+              </DialogTitle>
+            </DialogHeader>
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
               <div className="text-center">

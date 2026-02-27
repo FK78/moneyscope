@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/index';
-import { accountsTable } from '@/db/schema';
+import { accountsTable, transactionsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
@@ -24,5 +24,11 @@ export async function editAccount(id: number, formData: FormData) {
     balance: parseFloat(formData.get('balance') as string),
     currency: (formData.get('currency') as string) || 'USD',
   }).where(eq(accountsTable.id, id));
+  revalidatePath('/dashboard/accounts');
+}
+
+export async function deleteAccount(id: number) {
+  await db.delete(transactionsTable).where(eq(transactionsTable.account_id, id));
+  await db.delete(accountsTable).where(eq(accountsTable.id, id));
   revalidatePath('/dashboard/accounts');
 }

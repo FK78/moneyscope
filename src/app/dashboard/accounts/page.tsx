@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { getAccountsWithDetails } from "@/db/queries/accounts";
 import { AccountFormDialog } from "@/components/AddAccountForm";
+import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { formatCurrency } from "@/lib/formatCurrency";
 
 const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
@@ -35,13 +36,15 @@ export default async function Accounts() {
 
   const accounts = await getAccountsWithDetails(1);
 
-  const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+  const liabilityTypes = new Set(["credit_card"]);
   const totalAssets = accounts
-    .filter((a) => a.balance > 0)
+    .filter((a) => !liabilityTypes.has(a.type ?? ""))
     .reduce((sum, a) => sum + a.balance, 0);
   const totalLiabilities = accounts
-    .filter((a) => a.balance < 0)
+    .filter((a) => liabilityTypes.has(a.type ?? ""))
     .reduce((sum, a) => sum + Math.abs(a.balance), 0);
+  const totalBalance = totalAssets - totalLiabilities;
+  const totalAbsolute = accounts.reduce((sum, a) => sum + Math.abs(a.balance), 0);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
@@ -65,8 +68,8 @@ export default async function Accounts() {
             <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
-            <CardTitle className="text-2xl">
-              {formatCurrency(totalBalance)}
+            <CardTitle className={`text-2xl ${totalBalance < 0 ? "text-red-600" : ""}`}>
+              {totalBalance < 0 ? "−" : ""}{formatCurrency(totalBalance)}
             </CardTitle>
             <p className="text-muted-foreground mt-1 text-xs">
               Across {accounts.length} accounts
@@ -81,8 +84,8 @@ export default async function Accounts() {
             <TrendingUp className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <CardTitle className="text-2xl text-emerald-600">
-              {formatCurrency(totalAssets)}
+            <CardTitle className={`text-2xl ${totalAssets < 0 ? "text-red-600" : "text-emerald-600"}`}>
+              {totalAssets < 0 ? "−" : ""}{formatCurrency(totalAssets)}
             </CardTitle>
           </CardContent>
         </Card>
@@ -126,6 +129,7 @@ export default async function Accounts() {
                 <div className="flex items-center gap-2">
                   <Badge variant={config.variant}>{config.label}</Badge>
                   <AccountFormDialog account={account} />
+                  <DeleteAccountButton account={account} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -143,18 +147,18 @@ export default async function Accounts() {
                       className={`h-full rounded-full ${account.balance >= 0 ? "bg-emerald-500" : "bg-red-500"
                         }`}
                       style={{
-                        width: `${Math.min(
-                          (Math.abs(account.balance) / totalAssets) * 100,
+                        width: `${totalAbsolute > 0 ? Math.min(
+                          (Math.abs(account.balance) / totalAbsolute) * 100,
                           100
-                        )}%`,
+                        ) : 0}%`,
                       }}
                     />
                   </div>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    {((Math.abs(account.balance) / totalAssets) * 100).toFixed(
+                    {totalAbsolute > 0 ? ((Math.abs(account.balance) / totalAbsolute) * 100).toFixed(
                       1
-                    )}
-                    % of total assets
+                    ) : "0.0"}
+                    % of total
                   </p>
                 </div>
               </CardContent>
