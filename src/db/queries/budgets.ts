@@ -8,6 +8,7 @@ export async function getBudgets(userId: number) {
     category_id: budgetsTable.category_id,
     budgetCategory: categoriesTable.name,
     budgetColor: categoriesTable.color,
+    budgetIcon: categoriesTable.icon,
     budgetAmount: budgetsTable.amount,
     budgetSpent: sql<number>`coalesce(${sum(transactionsTable.amount)}, 0)`.mapWith(Number),
     budgetPeriod: budgetsTable.period,
@@ -17,5 +18,5 @@ export async function getBudgets(userId: number) {
     .innerJoin(categoriesTable, eq(categoriesTable.id, budgetsTable.category_id))
     .leftJoin(transactionsTable, eq(transactionsTable.category_id, budgetsTable.category_id))
     .where(eq(budgetsTable.user_id, userId))
-    .groupBy(budgetsTable.id, budgetsTable.category_id, categoriesTable.name, categoriesTable.color, budgetsTable.amount, budgetsTable.period, budgetsTable.start_date);
+    .groupBy(budgetsTable.id, budgetsTable.category_id, categoriesTable.name, categoriesTable.color, categoriesTable.icon, budgetsTable.amount, budgetsTable.period, budgetsTable.start_date);
 }
