@@ -54,7 +54,7 @@ export default async function Accounts() {
   const totalAbsolute = accounts.reduce((sum, a) => sum + Math.abs(a.balance), 0);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
+    <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>

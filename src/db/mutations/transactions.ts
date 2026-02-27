@@ -8,6 +8,21 @@ import { getCurrentUserId } from '@/lib/auth';
 import { checkBudgetAlerts } from '@/lib/budget-alerts';
 
 type Transaction = typeof transactionsTable.$inferInsert;
+type RecurringPattern = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
+
+function computeNextRecurringDate(dateStr: string, pattern: string | null): string | null {
+  if (!pattern) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  switch (pattern as RecurringPattern) {
+    case 'daily': d.setDate(d.getDate() + 1); break;
+    case 'weekly': d.setDate(d.getDate() + 7); break;
+    case 'biweekly': d.setDate(d.getDate() + 14); break;
+    case 'monthly': d.setMonth(d.getMonth() + 1); break;
+    case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+    default: return null;
+  }
+  return d.toISOString().split('T')[0];
+}
 
 export async function createTransaction(transaction: Transaction) {
   return await db.insert(transactionsTable).values(transaction).returning({ id: transactionsTable.id });
@@ -22,15 +37,23 @@ export async function addTransaction(formData: FormData) {
   const amount = parseFloat(formData.get('amount') as string);
   const accountId = Number(formData.get('account_id'));
 
+  const isRecurring = formData.get('is_recurring') === 'true';
+  const recurringPattern = isRecurring ? (formData.get('recurring_pattern') as string | null) : null;
+  const txnDate = formData.get('date') as string;
+  const nextRecurringDate = isRecurring && recurringPattern && txnDate
+    ? computeNextRecurringDate(txnDate, recurringPattern)
+    : null;
+
   const [result] = await createTransaction({
     type,
     amount,
     description: formData.get('description') as string,
-    is_recurring: formData.get('is_recurring') === 'true',
-    date: formData.get('date') as string,
+    is_recurring: isRecurring,
+    date: txnDate,
     account_id: accountId,
     category_id: Number(formData.get('category_id')),
-    recurring_pattern: formData.get('recurring_pattern') as string | null,
+    recurring_pattern: recurringPattern as typeof transactionsTable.$inferInsert['recurring_pattern'],
+    next_recurring_date: nextRecurringDate,
   });
 
   await db.update(accountsTable)
@@ -59,15 +82,23 @@ export async function editTransaction(formData: FormData) {
     account_id: transactionsTable.account_id,
   }).from(transactionsTable).where(eq(transactionsTable.id, id));
 
+  const isRecurring = formData.get('is_recurring') === 'true';
+  const recurringPattern = isRecurring ? (formData.get('recurring_pattern') as string | null) : null;
+  const txnDate = formData.get('date') as string;
+  const nextRecurringDate = isRecurring && recurringPattern && txnDate
+    ? computeNextRecurringDate(txnDate, recurringPattern)
+    : null;
+
   const [result] = await db.update(transactionsTable).set({
     type: newType,
     amount: newAmount,
     description: formData.get('description') as string,
-    is_recurring: formData.get('is_recurring') === 'true',
-    date: formData.get('date') as string,
+    is_recurring: isRecurring,
+    date: txnDate,
     account_id: newAccountId,
     category_id: Number(formData.get('category_id')),
-    recurring_pattern: formData.get('recurring_pattern') as string | null,
+    recurring_pattern: recurringPattern as typeof transactionsTable.$inferInsert['recurring_pattern'],
+    next_recurring_date: nextRecurringDate,
   }).where(eq(transactionsTable.id, id)).returning({ id: transactionsTable.id });
 
   if (old) {

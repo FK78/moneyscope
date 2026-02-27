@@ -44,7 +44,7 @@ export default async function Budgets() {
   const overBudgetCount = budgets.filter((b) => b.budgetSpent > b.budgetAmount).length;
   const spentPercent = totalBudget > 0 ? ((totalSpent / totalBudget) * 100).toFixed(0) : "0";
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
+    <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Budgets</h1>

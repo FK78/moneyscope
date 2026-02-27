@@ -7,6 +7,7 @@ import { NotificationBellServer } from "@/components/NotificationBellServer";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getCurrentUserId } from "@/lib/auth";
 import { hasCompletedOnboarding } from "@/db/queries/onboarding";
+import { generateDueRecurringTransactions } from "@/lib/recurring-transactions";
 
 export default async function DashboardLayout({
   children,
@@ -14,7 +15,10 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const userId = await getCurrentUserId();
-  const onboardingComplete = await hasCompletedOnboarding(userId);
+  const [onboardingComplete] = await Promise.all([
+    hasCompletedOnboarding(userId),
+    generateDueRecurringTransactions(userId),
+  ]);
 
   if (!onboardingComplete) {
     redirect("/onboarding");
@@ -23,7 +27,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen">
       <nav className="border-border sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-6 px-6 md:px-10">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 px-6 md:px-10">
           <div className="flex items-center gap-6">
             <Link
               href="/dashboard"

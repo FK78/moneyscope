@@ -56,6 +56,7 @@ export function TransactionFormDialog({
   const [savedIds, setSavedIds] = useState<number[]>([]);
   const [isPending, startTransition] = useTransition();
   const [formKey, setFormKey] = useState(0);
+  const [isRecurring, setIsRecurring] = useState(transaction?.is_recurring ?? false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -243,7 +244,11 @@ export function TransactionFormDialog({
               {/* Recurring */}
               <div className="grid gap-2">
                 <Label htmlFor="is_recurring">Recurring</Label>
-                <Select name="is_recurring" defaultValue={String(transaction?.is_recurring ?? false)}>
+                <Select
+                  name="is_recurring"
+                  defaultValue={String(transaction?.is_recurring ?? false)}
+                  onValueChange={(v) => setIsRecurring(v === "true")}
+                >
                   <SelectTrigger id="is_recurring">
                     <SelectValue placeholder="Is this recurring?" />
                   </SelectTrigger>
@@ -253,6 +258,25 @@ export function TransactionFormDialog({
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Recurring Pattern */}
+              {isRecurring && (
+                <div className="grid gap-2">
+                  <Label htmlFor="recurring_pattern">Frequency</Label>
+                  <Select name="recurring_pattern" defaultValue="monthly">
+                    <SelectTrigger id="recurring_pattern">
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="biweekly">Every 2 weeks</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>

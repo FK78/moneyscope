@@ -1,6 +1,6 @@
 export default function TransactionsLoading() {
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
+    <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="bg-muted h-9 w-44 animate-pulse rounded-md" />

@@ -24,7 +24,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="mx-auto max-w-5xl p-6 md:p-10">
+    <div className="mx-auto max-w-7xl p-6 md:p-10">
       <Card className="mx-auto max-w-xl">
         <CardHeader className="text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">

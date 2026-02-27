@@ -21,6 +21,8 @@ CREATE TABLE categories (
   icon VARCHAR(255)
 );
 
+CREATE TYPE recurring_pattern AS ENUM ('daily', 'weekly', 'biweekly', 'monthly', 'yearly');
+
 CREATE TABLE transactions (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
@@ -30,7 +32,8 @@ CREATE TABLE transactions (
   description VARCHAR(255) NOT NULL,
   date DATE,
   is_recurring BOOLEAN NOT NULL,
-  recurring_pattern VARCHAR(255),
+  recurring_pattern recurring_pattern,
+  next_recurring_date DATE,
   created_at DATE DEFAULT CURRENT_DATE
 );
 

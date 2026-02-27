@@ -34,10 +34,11 @@ import { getCurrentUserId } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
 import { CashflowCharts } from "@/components/CashflowCharts";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
   const userId = await getCurrentUserId();
-  
+
   const [lastFiveTransactions, accounts, expensesRows, incomeRows, lastMonthIncomeRows, lastMonthExpensesRows, savingsThisMonthRows, spendByCategory, monthlyTrend, baseCurrency] =
     await Promise.all([
       getLatestFiveTransactionsWithDetails(userId),
@@ -66,12 +67,17 @@ export default async function Home() {
     savingsBalance, parseTotal(savingsThisMonthRows),
     baseCurrency,
   );
+
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
+
   return (
-    <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
+    <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Welcome back, Alice. Here&apos;s your financial overview.
+          Welcome back, {user?.user_metadata?.display_name || user?.user_metadata?.full_name || user?.email}. Here&apos;s your financial overview.
         </p>
       </div>
 
