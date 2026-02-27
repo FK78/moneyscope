@@ -4,6 +4,8 @@ import { db } from '@/index';
 import { accountsTable, transactionsTable } from '@/db/schema';
 import { revalidatePath } from 'next/cache';
 import { eq, sql } from 'drizzle-orm';
+import { getCurrentUserId } from '@/lib/auth';
+import { checkBudgetAlerts } from '@/lib/budget-alerts';
 
 type Transaction = typeof transactionsTable.$inferInsert;
 
@@ -37,6 +39,10 @@ export async function addTransaction(formData: FormData) {
 
   revalidatePath('/dashboard/transactions');
   revalidatePath('/dashboard/accounts');
+
+  const userId = await getCurrentUserId();
+  await checkBudgetAlerts(userId);
+
   return result;
 }
 
@@ -79,6 +85,10 @@ export async function editTransaction(formData: FormData) {
 
   revalidatePath('/dashboard/transactions');
   revalidatePath('/dashboard/accounts');
+
+  const userId = await getCurrentUserId();
+  await checkBudgetAlerts(userId);
+
   return result;
 }
 
