@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Plus, Pencil, CheckCircle2, Loader2 } from "lucide-react";
+import { useState, useTransition, useMemo } from "react";
+import { Plus, Pencil, CheckCircle2, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CATEGORY_ICONS } from "@/lib/categoryIcons";
 import {
   Dialog,
   DialogContent,
@@ -37,11 +38,23 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
   const [isPending, startTransition] = useTransition();
   const [formKey, setFormKey] = useState(0);
   const [selectedColor, setSelectedColor] = useState(category?.color ?? PRESET_COLORS[0]);
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(category?.icon ?? null);
+  const [iconSearch, setIconSearch] = useState("");
+
+  const filteredIcons = useMemo(() => {
+    const entries = Object.entries(CATEGORY_ICONS);
+    if (!iconSearch) return entries;
+    return entries.filter(([name]) => name.includes(iconSearch.toLowerCase()));
+  }, [iconSearch]);
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
       setView("form");
-      if (!isEdit) setSelectedColor(PRESET_COLORS[0]);
+      if (!isEdit) {
+        setSelectedColor(PRESET_COLORS[0]);
+        setSelectedIcon(null);
+        setIconSearch("");
+      }
     }
     setOpen(nextOpen);
   }
@@ -50,6 +63,7 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     formData.set("color", selectedColor);
+    formData.set("icon", selectedIcon ?? "");
     startTransition(async () => {
       if (isEdit) {
         await editCategory(category.id, formData);
@@ -63,6 +77,8 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
   function handleAddAnother() {
     setFormKey((k) => k + 1);
     setSelectedColor(PRESET_COLORS[0]);
+    setSelectedIcon(null);
+    setIconSearch("");
     setView("form");
   }
 
@@ -156,13 +172,39 @@ export function CategoryFormDialog({ category }: { category?: Category }) {
 
               {/* Icon */}
               <div className="grid gap-2">
-                <Label htmlFor="icon">Icon (optional)</Label>
-                <Input
-                  id="icon"
-                  name="icon"
-                  placeholder="e.g. shopping-cart"
-                  defaultValue={category?.icon ?? ""}
-                />
+                <Label>Icon</Label>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search icons..."
+                    value={iconSearch}
+                    onChange={(e) => setIconSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+                <div className="grid grid-cols-8 gap-1.5 max-h-36 overflow-y-auto rounded-md border p-2">
+                  {filteredIcons.map(([name, Icon]) => (
+                    <button
+                      key={name}
+                      type="button"
+                      title={name}
+                      className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+                        selectedIcon === name
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                      }`}
+                      onClick={() => setSelectedIcon(selectedIcon === name ? null : name)}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                  {filteredIcons.length === 0 && (
+                    <p className="col-span-8 text-center text-xs text-muted-foreground py-2">No icons found</p>
+                  )}
+                </div>
+                {selectedIcon && (
+                  <p className="text-xs text-muted-foreground">Selected: {selectedIcon}</p>
+                )}
               </div>
 
               <DialogFooter>
