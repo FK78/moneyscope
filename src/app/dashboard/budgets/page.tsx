@@ -23,15 +23,20 @@ import { getCurrentUserId } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
 import { BudgetCharts } from "@/components/BudgetCharts";
+import { BudgetAlertSettings } from "@/components/BudgetAlertSettings";
+import { getAlertPreferencesByUser } from "@/db/queries/budget-alerts";
 
 export default async function Budgets() {
   const userId = await getCurrentUserId();
   
-  const [budgets, categories, baseCurrency] = await Promise.all([
+  const [budgets, categories, baseCurrency, alertPrefs] = await Promise.all([
     getBudgets(userId),
     getCategoriesByUser(userId),
     getUserBaseCurrency(userId),
+    getAlertPreferencesByUser(userId),
   ]);
+
+  const alertPrefsMap = new Map(alertPrefs.map(p => [p.budget_id, p]));
 
   const totalBudget = budgets.reduce((sum, b) => sum + b.budgetAmount, 0);
   const totalSpent = budgets.reduce((sum, b) => sum + b.budgetSpent, 0);
@@ -185,6 +190,11 @@ export default async function Budgets() {
                     >
                       {isOver ? "Over" : isNear ? "Almost" : "On track"}
                     </Badge>
+                    <BudgetAlertSettings
+                      budgetId={budget.id}
+                      budgetCategory={budget.budgetCategory}
+                      prefs={alertPrefsMap.get(budget.id) ?? null}
+                    />
                     <BudgetFormDialog categories={categories} budget={budget} />
                     <DeleteBudgetButton budget={budget} />
                   </div>
