@@ -50,6 +50,8 @@ import {
 import { ArrowDownLeft, ArrowUpDown, ArrowUpRight, CheckCircle2, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { deleteTransaction } from "@/db/mutations/transactions";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { TransactionsInsightsCharts } from "@/components/TransactionsInsightsCharts";
+import type { DailyCashflowPoint, DailyCategoryExpensePoint } from "@/db/queries/transactions";
 
 function DeleteTransactionButton({
   transaction,
@@ -149,6 +151,8 @@ export function TransactionsClient({
   currentPage,
   pageSize,
   totalTransactions,
+  dailyTrend,
+  dailyCategoryExpenses,
   currency,
 }: {
   transactions: Transaction[];
@@ -157,6 +161,8 @@ export function TransactionsClient({
   currentPage: number;
   pageSize: number;
   totalTransactions: number;
+  dailyTrend: DailyCashflowPoint[];
+  dailyCategoryExpenses: DailyCategoryExpensePoint[];
   currency: string;
 }) {
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
@@ -408,6 +414,12 @@ export function TransactionsClient({
           </CardContent>
         </Card>
       </div>
+
+      <TransactionsInsightsCharts
+        dailyTrend={dailyTrend}
+        dailyCategoryExpenses={dailyCategoryExpenses}
+        currency={currency}
+      />
 
       {/* Transactions table */}
       <Card>

@@ -152,6 +152,27 @@ export type MonthlyCashflowPoint = {
   net: number;
 };
 
+export type DailyCashflowPoint = {
+  day: string;
+  income: number;
+  expenses: number;
+  net: number;
+};
+
+export type DailyCategoryExpensePoint = {
+  day: string;
+  category: string;
+  color: string;
+  total: number;
+};
+
+export type MonthlyCategorySpendPoint = {
+  month: string;
+  category: string;
+  color: string;
+  total: number;
+};
+
 function getMonthKey(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${date.getFullYear()}-${month}`;
@@ -165,6 +186,23 @@ function getRecentMonthKeys(monthCount: number) {
   for (let monthsAgo = safeMonthCount - 1; monthsAgo >= 0; monthsAgo -= 1) {
     const monthDate = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
     keys.push(getMonthKey(monthDate));
+  }
+
+  return keys;
+}
+
+function getDayKey(date: Date) {
+  return date.toISOString().split('T')[0];
+}
+
+function getRecentDayKeys(dayCount: number) {
+  const safeDayCount = Math.max(1, Math.floor(dayCount));
+  const now = new Date();
+  const keys: string[] = [];
+
+  for (let daysAgo = safeDayCount - 1; daysAgo >= 0; daysAgo -= 1) {
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
+    keys.push(getDayKey(day));
   }
 
   return keys;
@@ -223,4 +261,131 @@ export async function getMonthlyIncomeExpenseTrend(userId: string, monthCount = 
       net: totals.income - totals.expenses,
     };
   });
+}
+
+export async function getDailyIncomeExpenseTrend(userId: string, dayCount = 30): Promise<DailyCashflowPoint[]> {
+  const dayKeys = getRecentDayKeys(dayCount);
+  const [startDay] = dayKeys;
+  const now = new Date();
+  const endDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+    .toISOString()
+    .split('T')[0];
+
+  const rows = await db
+    .select({
+      day: sql<string>`to_char(${transactionsTable.date}, 'YYYY-MM-DD')`,
+      type: transactionsTable.type,
+      total: sql<number>`coalesce(sum(${transactionsTable.amount}), 0)`.mapWith(Number),
+    })
+    .from(transactionsTable)
+    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
+    .where(and(
+      eq(accountsTable.user_id, userId),
+      gte(transactionsTable.date, startDay),
+      lt(transactionsTable.date, endDay),
+    ))
+    .groupBy(
+      transactionsTable.date,
+      transactionsTable.type,
+    )
+    .orderBy(transactionsTable.date);
+
+  const dayMap = new Map<string, { income: number; expenses: number }>();
+  for (const dayKey of dayKeys) {
+    dayMap.set(dayKey, { income: 0, expenses: 0 });
+  }
+
+  for (const row of rows) {
+    const existing = dayMap.get(row.day);
+    if (!existing) {
+      continue;
+    }
+
+    if (row.type === 'income') {
+      existing.income = row.total;
+    } else if (row.type === 'expense') {
+      existing.expenses = row.total;
+    }
+  }
+
+  return dayKeys.map((day) => {
+    const totals = dayMap.get(day) ?? { income: 0, expenses: 0 };
+    return {
+      day,
+      income: totals.income,
+      expenses: totals.expenses,
+      net: totals.income - totals.expenses,
+    };
+  });
+}
+
+export async function getDailyExpenseByCategory(userId: string, dayCount = 30): Promise<DailyCategoryExpensePoint[]> {
+  const dayKeys = getRecentDayKeys(dayCount);
+  const [startDay] = dayKeys;
+  const now = new Date();
+  const endDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+    .toISOString()
+    .split('T')[0];
+
+  const rows = await db
+    .select({
+      day: sql<string>`to_char(${transactionsTable.date}, 'YYYY-MM-DD')`,
+      category: categoriesTable.name,
+      color: categoriesTable.color,
+      total: sql<number>`coalesce(sum(${transactionsTable.amount}), 0)`.mapWith(Number),
+    })
+    .from(transactionsTable)
+    .innerJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
+    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
+    .where(and(
+      eq(accountsTable.user_id, userId),
+      eq(transactionsTable.type, 'expense'),
+      gte(transactionsTable.date, startDay),
+      lt(transactionsTable.date, endDay),
+    ))
+    .groupBy(
+      transactionsTable.date,
+      categoriesTable.name,
+      categoriesTable.color,
+    )
+    .orderBy(transactionsTable.date, categoriesTable.name);
+
+  return rows;
+}
+
+export async function getMonthlyCategorySpendTrend(userId: string, monthCount = 6): Promise<MonthlyCategorySpendPoint[]> {
+  const monthKeys = getRecentMonthKeys(monthCount);
+  const [startMonth] = monthKeys;
+  const now = new Date();
+  const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    .toISOString()
+    .split('T')[0];
+
+  const rows = await db
+    .select({
+      month: sql<string>`to_char(date_trunc('month', ${transactionsTable.date}), 'YYYY-MM')`,
+      category: categoriesTable.name,
+      color: categoriesTable.color,
+      total: sql<number>`coalesce(sum(${transactionsTable.amount}), 0)`.mapWith(Number),
+    })
+    .from(transactionsTable)
+    .innerJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
+    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
+    .where(and(
+      eq(accountsTable.user_id, userId),
+      eq(transactionsTable.type, 'expense'),
+      gte(transactionsTable.date, `${startMonth}-01`),
+      lt(transactionsTable.date, endMonth),
+    ))
+    .groupBy(
+      sql`date_trunc('month', ${transactionsTable.date})`,
+      categoriesTable.name,
+      categoriesTable.color,
+    )
+    .orderBy(
+      sql`date_trunc('month', ${transactionsTable.date})`,
+      categoriesTable.name,
+    );
+
+  return rows;
 }

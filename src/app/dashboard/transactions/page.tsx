@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import {
+  getDailyExpenseByCategory,
+  getDailyIncomeExpenseTrend,
   getTransactionsCount,
   getTransactionsWithDetailsPaginated,
 } from "@/db/queries/transactions";
@@ -30,11 +32,13 @@ export default async function Transactions({
   const requestedPage = normalizePage(resolvedSearchParams?.page);
   const userId = await getCurrentUserId();
 
-  const [transactions, accounts, categories, totalTransactions, baseCurrency] = await Promise.all([
+  const [transactions, accounts, categories, totalTransactions, dailyTrend, dailyCategoryExpenses, baseCurrency] = await Promise.all([
     getTransactionsWithDetailsPaginated(userId, requestedPage, PAGE_SIZE),
     getAccountsWithDetails(userId),
     getCategoriesByUser(userId),
     getTransactionsCount(userId),
+    getDailyIncomeExpenseTrend(userId, 90),
+    getDailyExpenseByCategory(userId, 90),
     getUserBaseCurrency(userId),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalTransactions / PAGE_SIZE));
@@ -51,6 +55,8 @@ export default async function Transactions({
       currentPage={requestedPage}
       pageSize={PAGE_SIZE}
       totalTransactions={totalTransactions}
+      dailyTrend={dailyTrend}
+      dailyCategoryExpenses={dailyCategoryExpenses}
       currency={baseCurrency}
     />
   );

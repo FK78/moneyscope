@@ -22,6 +22,7 @@ import { getCategoryIcon } from "@/lib/categoryIcons";
 import { getCurrentUserId } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
+import { BudgetCharts } from "@/components/BudgetCharts";
 
 export default async function Budgets() {
   const userId = await getCurrentUserId();
@@ -118,6 +119,10 @@ export default async function Budgets() {
           </CardContent>
         </Card>
       </div>
+
+      {budgets.length > 0 && (
+        <BudgetCharts budgets={budgets} currency={baseCurrency} />
+      )}
 
       {/* Budget cards */}
       {budgets.length === 0 ? (

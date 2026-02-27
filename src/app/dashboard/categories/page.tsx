@@ -6,16 +6,35 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCategoriesByUser } from "@/db/queries/categories";
+import {
+  getMonthlyCategorySpendTrend,
+  getTotalSpendByCategoryThisMonth,
+} from "@/db/queries/transactions";
 import { CategoryFormDialog } from "@/components/CategoryFormDialog";
 import { DeleteCategoryButton } from "@/components/DeleteCategoryButton";
 import { getCategoryIcon } from "@/lib/categoryIcons";
 import { getCurrentUserId } from "@/lib/auth";
+import { getUserBaseCurrency } from "@/db/queries/onboarding";
 import { Tags } from "lucide-react";
+import { CategoryCharts } from "@/components/CategoryCharts";
 
 export default async function Categories() {
   const userId = await getCurrentUserId();
-  
-  const categories = await getCategoriesByUser(userId);
+
+  const [categories, topSpendRows, monthlySpendRows, baseCurrency] = await Promise.all([
+    getCategoriesByUser(userId),
+    getTotalSpendByCategoryThisMonth(userId),
+    getMonthlyCategorySpendTrend(userId, 6),
+    getUserBaseCurrency(userId),
+  ]);
+
+  const topSpendByCategory = topSpendRows
+    .map((row) => ({
+      category: row.category,
+      color: row.color,
+      total: Number(row.total) || 0,
+    }))
+    .sort((a, b) => b.total - a.total);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
@@ -28,6 +47,14 @@ export default async function Categories() {
         </div>
         <CategoryFormDialog />
       </div>
+
+      {(topSpendByCategory.length > 0 || monthlySpendRows.length > 0) && (
+        <CategoryCharts
+          topThisMonth={topSpendByCategory}
+          monthlyRows={monthlySpendRows}
+          currency={baseCurrency}
+        />
+      )}
 
       <Card>
         <CardHeader>

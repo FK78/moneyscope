@@ -19,6 +19,7 @@ import { DeleteAccountButton } from "@/components/DeleteAccountButton";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { getCurrentUserId } from "@/lib/auth";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
+import { AccountCharts } from "@/components/AccountCharts";
 
 const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   checking: { label: "Checking", variant: "secondary" },
@@ -109,6 +110,10 @@ export default async function Accounts() {
           </CardContent>
         </Card>
       </div>
+
+      {accounts.length > 0 && (
+        <AccountCharts accounts={accounts} currency={baseCurrency} />
+      )}
 
       {/* Account cards */}
       {accounts.length === 0 ? (
