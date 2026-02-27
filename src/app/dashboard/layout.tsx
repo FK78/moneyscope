@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/DashboardNav";
 import { AuthButton } from "@/components/AuthButton";
 import { NotificationBellServer } from "@/components/NotificationBellServer";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { getCurrentUserId } from "@/lib/auth";
 import { hasCompletedOnboarding } from "@/db/queries/onboarding";
 
@@ -32,7 +33,8 @@ export default async function DashboardLayout({
             </Link>
             <DashboardNav />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
             <Suspense>
               <NotificationBellServer />
             </Suspense>

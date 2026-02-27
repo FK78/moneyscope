@@ -75,7 +75,7 @@ export function AccountCharts({
 }) {
   const totalsByType = new Map<string, number>();
   for (const account of accounts) {
-    const key = (account.type ?? "other").toLowerCase();
+    const key = account.type ?? "other";
     totalsByType.set(key, (totalsByType.get(key) ?? 0) + Math.abs(account.balance));
   }
 
