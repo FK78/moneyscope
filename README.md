@@ -1,24 +1,28 @@
 # MoneyScope
 
-A personal finance dashboard for tracking accounts, budgets, transactions, and spending — built with **Next.js 16**, **Drizzle ORM**, and **Neon Postgres**.
+A personal finance dashboard for tracking accounts, budgets, transactions, and spending — built with **Next.js 16**, **Drizzle ORM**, and **Supabase Postgres**.
 
 ## Features
 
-- **Accounts** — View all checking, savings, credit card, and investment accounts with balances at a glance
-- **Transactions** — Browse income and expenses with category labels, account attribution, and recurring indicators
+- **Accounts** — View, add, edit, and delete checking, savings, credit card, and investment accounts with live balance tracking
+- **Transactions** — Full CRUD for income and expenses with category labels, account attribution, and recurring indicators. Adding, editing, or deleting a transaction automatically adjusts the linked account balance.
 - **Budgets** — Set monthly or weekly budgets per category and track spending progress with visual indicators
 - **Dashboard** — Summary cards, recent transactions, spending breakdown by category, and account overview in one place
+- **Smart Summary Cards** — Net worth, total assets, and total liabilities classified by account type (not balance sign). Negative balances display correctly with red text and minus sign.
+- **Confirmation Dialogs** — Delete actions use a two-step flow: confirmation dialog → success/error result dialog
+- **Accessibility** — All dialogs include screen-reader-friendly titles
 
 ## Tech Stack
 
-| Layer        | Technology                              |
-| ------------ | --------------------------------------- |
-| Framework    | Next.js 16 (App Router, Server Components) |
-| Language     | TypeScript                              |
-| Database     | PostgreSQL via Neon serverless driver    |
-| ORM          | Drizzle ORM + Drizzle Kit               |
-| Styling      | Tailwind CSS 4                          |
-| UI Components| shadcn/ui, Radix UI, Lucide icons       |
+| Layer         | Technology                                 |
+| ------------- | ------------------------------------------ |
+| Framework     | Next.js 16 (App Router, Server Components) |
+| Language      | TypeScript                                 |
+| Database      | PostgreSQL via Supabase                    |
+| ORM           | Drizzle ORM + Drizzle Kit                  |
+| DB Driver     | postgres.js                                |
+| Styling       | Tailwind CSS 4                             |
+| UI Components | shadcn/ui, Radix UI, Lucide icons          |
 
 ## Project Structure
 
@@ -26,20 +30,31 @@ A personal finance dashboard for tracking accounts, budgets, transactions, and s
 src/
 ├── app/
 │   ├── dashboard/
-│   │   ├── accounts/       # Accounts page
+│   │   ├── accounts/       # Accounts page (add, edit, delete)
 │   │   ├── budgets/        # Budgets page
-│   │   ├── transactions/   # Transactions page
+│   │   ├── transactions/   # Transactions page (add, edit, delete)
 │   │   ├── layout.tsx      # Dashboard shell & navbar
 │   │   └── page.tsx        # Dashboard overview
 │   ├── layout.tsx          # Root layout
 │   └── globals.css
-├── components/ui/          # shadcn/ui components
+├── components/
+│   ├── ui/                 # shadcn/ui components (dialog, alert-dialog, etc.)
+│   ├── AccountCard.tsx
+│   ├── AddAccountForm.tsx  # Unified add/edit account dialog
+│   ├── AddTransactionForm.tsx # Unified add/edit transaction dialog
+│   ├── DeleteAccountButton.tsx # Delete account with confirmation
+│   ├── SpendCategoryRow.tsx
+│   └── TransactionsClient.tsx  # Transaction list with delete, highlight animation
 ├── db/
 │   ├── schema.ts           # Drizzle table definitions
-│   └── queries/            # Per-domain query modules
+│   ├── queries/            # Per-domain query modules
+│   └── mutations/          # Server actions (add, edit, delete)
 ├── lib/
-│   └── utils.ts            # Shared utilities
-└── index.ts                # Shared DB instance
+│   ├── formatCurrency.ts   # Shared currency formatter
+│   ├── parseTotal.ts
+│   ├── summaryCards.ts
+│   └── utils.ts
+└── index.ts                # Shared DB instance (postgres.js driver)
 ```
 
 ## Getting Started
@@ -47,7 +62,7 @@ src/
 ### Prerequisites
 
 - Node.js 20+
-- A [Neon](https://neon.tech) Postgres database (or any Postgres instance)
+- A [Supabase](https://supabase.com) project (or any PostgreSQL instance)
 
 ### Setup
 
@@ -70,14 +85,23 @@ src/
    cp .env.example .env
    ```
 
-   Fill in your `DATABASE_URL` (Neon connection string or any Postgres URL).
+   Fill in your `DATABASE_URL` with your Supabase connection string:
 
-4. **Push the schema & seed the database**
+   ```
+   DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+   ```
+
+   Find this in **Supabase Dashboard → Settings → Database → Connection string → URI** (use the Transaction pooler, port 6543).
+
+4. **Create tables & seed the database**
+
+   Run the full `seed.sql` in the Supabase SQL Editor or via CLI:
 
    ```bash
-   npx drizzle-kit push
    psql $DATABASE_URL -f seed.sql
    ```
+
+   This creates all tables, enums, and inserts sample data.
 
 5. **Run the dev server**
 
@@ -98,12 +122,12 @@ src/
 
 ## Database Schema
 
-Six tables managed by Drizzle ORM:
+Six tables managed by Drizzle ORM with foreign key cascade deletes:
 
 - **users** — email, name, preferred currency
-- **accounts** — per-user financial accounts (checking, savings, credit card, investment)
+- **accounts** — per-user financial accounts (checking, savings, credit_card, investment). Balance updated automatically on transaction changes.
 - **categories** — spending categories with color and icon
-- **transactions** — income/expense records linked to accounts and categories
+- **transactions** — income/expense records linked to accounts and categories. Cascade-deleted when parent account is removed.
 - **budgets** — spending limits per category with monthly/weekly periods
 - **categorisation_rules** — pattern-based auto-categorisation rules
 
