@@ -5,9 +5,9 @@ import { budgetsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
-export async function addBudget(formData: FormData) {
+export async function addBudget(formData: FormData, userId: string) {
   const [result] = await db.insert(budgetsTable).values({
-    user_id: 1,
+    user_id: userId,
     category_id: Number(formData.get('category_id')),
     amount: parseFloat(formData.get('amount') as string),
     period: formData.get('period') as 'monthly' | 'weekly',

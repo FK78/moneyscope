@@ -1,6 +1,6 @@
 import { db } from '@/index';
 import { transactionsTable, categoriesTable, accountsTable } from '@/db/schema';
-import { and, desc, eq, ne, sum, gte, lt } from 'drizzle-orm';
+import { and, desc, eq, ne, sum, gte, lt, sql } from 'drizzle-orm';
 
 function getMonthRange(monthsAgo = 0) {
   const now = new Date();
@@ -25,33 +25,33 @@ const transactionSelect = {
   is_recurring: transactionsTable.is_recurring,
 };
 
-function baseTransactionsQuery(userId: number) {
+function baseTransactionsQuery(userId: string | number) {
   return db.select(transactionSelect)
     .from(transactionsTable)
     .innerJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
-    .where(eq(accountsTable.user_id, userId))
+    .where(sql`${accountsTable.user_id}::text = ${userId}`)
     .$dynamic();
 }
 
-export async function getTransactionsWithDetails(userId: number) {
+export async function getTransactionsWithDetails(userId: string | number) {
   return await baseTransactionsQuery(userId).orderBy(desc(transactionsTable.date));
 }
 
-export async function getLatestFiveTransactionsWithDetails(userId: number) {
+export async function getLatestFiveTransactionsWithDetails(userId: string | number) {
   return await baseTransactionsQuery(userId)
     .orderBy(desc(transactionsTable.date))
     .limit(5);
 }
 
-function getTotalByType(userId: number, type: 'income' | 'expense', monthsAgo = 0) {
+function getTotalByType(userId: string | number, type: 'income' | 'expense', monthsAgo = 0) {
   const { start, end } = getMonthRange(monthsAgo);
   return db.select({ total: sum(transactionsTable.amount) })
     .from(transactionsTable)
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
     .where(
       and(
-        eq(accountsTable.user_id, userId),
+        sql`${accountsTable.user_id}::text = ${userId}`,
         eq(transactionsTable.type, type),
         gte(transactionsTable.date, start),
         lt(transactionsTable.date, end)
@@ -59,30 +59,30 @@ function getTotalByType(userId: number, type: 'income' | 'expense', monthsAgo = 
     );
 }
 
-export async function getTotalIncomeOfTransactionsThisMonth(userId: number) {
+export async function getTotalIncomeOfTransactionsThisMonth(userId: string | number) {
   return await getTotalByType(userId, 'income');
 }
 
-export async function getTotalExpensesOfTransactionsThisMonth(userId: number) {
+export async function getTotalExpensesOfTransactionsThisMonth(userId: string | number) {
   return await getTotalByType(userId, 'expense');
 }
 
-export async function getTotalIncomeLastMonth(userId: number) {
+export async function getTotalIncomeLastMonth(userId: string | number) {
   return await getTotalByType(userId, 'income', 1);
 }
 
-export async function getTotalExpensesLastMonth(userId: number) {
+export async function getTotalExpensesLastMonth(userId: string | number) {
   return await getTotalByType(userId, 'expense', 1);
 }
 
-function getSavingsDeposits(userId: number, monthsAgo = 0) {
+function getSavingsDeposits(userId: string | number, monthsAgo = 0) {
   const { start, end } = getMonthRange(monthsAgo);
   return db.select({ total: sum(transactionsTable.amount) })
     .from(transactionsTable)
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
     .where(
       and(
-        eq(accountsTable.user_id, userId),
+        sql`${accountsTable.user_id}::text = ${userId}`,
         eq(accountsTable.type, 'savings'),
         gte(transactionsTable.date, start),
         lt(transactionsTable.date, end)
@@ -90,15 +90,15 @@ function getSavingsDeposits(userId: number, monthsAgo = 0) {
     );
 }
 
-export async function getSavingsDepositsThisMonth(userId: number) {
+export async function getSavingsDepositsThisMonth(userId: string | number) {
   return await getSavingsDeposits(userId);
 }
 
-export async function getSavingsDepositsLastMonth(userId: number) {
+export async function getSavingsDepositsLastMonth(userId: string | number) {
   return await getSavingsDeposits(userId, 1);
 }
 
-export async function getTotalSpendByCategoryThisMonth(userId: number){
+export async function getTotalSpendByCategoryThisMonth(userId: string | number){
   const { start, end } = getMonthRange();
 
   return await db.select({
@@ -109,7 +109,7 @@ export async function getTotalSpendByCategoryThisMonth(userId: number){
     .innerJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
     .where(and(
-      eq(accountsTable.user_id, userId),
+      sql`${accountsTable.user_id}::text = ${userId}`,
       eq(transactionsTable.type, 'expense'),
       ne(categoriesTable.name, 'Salary'),
       gte(transactionsTable.date, start),

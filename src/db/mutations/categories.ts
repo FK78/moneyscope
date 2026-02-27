@@ -5,9 +5,9 @@ import { categoriesTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
-export async function addCategory(formData: FormData) {
+export async function addCategory(formData: FormData, userId: string) {
   const [result] = await db.insert(categoriesTable).values({
-    user_id: 1,
+    user_id: userId,
     name: formData.get('name') as string,
     color: formData.get('color') as string,
     icon: (formData.get('icon') as string) || null,

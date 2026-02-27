@@ -1,12 +1,13 @@
-import { boolean, date, integer, pgEnum, pgTable, real, time, varchar } from "drizzle-orm/pg-core";
+import { boolean, date, integer, pgEnum, pgTable, real, varchar, uuid } from "drizzle-orm/pg-core";
 
 export const accountTypeEnum = pgEnum("account_type", ["checking", "savings", "credit_card", "investment"]);
 export const periodEnum = pgEnum("period", ["monthly", "weekly"]);
 export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
 
+// Legacy table used by seed.sql before auth.users integration.
 export const usersTable = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  email: varchar({ length: 255 }).notNull().unique(),
+  email: varchar({ length: 255 }).notNull(),
   name: varchar({ length: 255 }).notNull(),
   currency: varchar({ length: 3 }).notNull(),
   created_at: date().defaultNow(),
@@ -14,7 +15,7 @@ export const usersTable = pgTable("users", {
 
 export const accountsTable = pgTable("accounts", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  user_id: integer("user_id").references(() => usersTable.id),
+  user_id: uuid("user_id").notNull(),
   name: varchar({ length: 255 }).notNull(),
   type: accountTypeEnum(),
   balance: real().notNull(),
@@ -23,7 +24,7 @@ export const accountsTable = pgTable("accounts", {
 
 export const categoriesTable = pgTable("categories", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  user_id: integer("user_id").references(() => usersTable.id),
+  user_id: uuid("user_id").notNull(),
   name: varchar({ length: 255 }).notNull(),
   color: varchar({ length: 8 }).notNull(),
   icon: varchar({ length: 255 }),
@@ -45,7 +46,7 @@ export const transactionsTable = pgTable("transactions", {
 
 export const budgetsTable = pgTable("budgets", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    user_id: integer("user_id").references(() => usersTable.id),
+    user_id: uuid("user_id").notNull(),
     category_id: integer("category_id").references(() => categoriesTable.id),
     amount: real().notNull(),
     period: periodEnum(),
@@ -54,7 +55,7 @@ export const budgetsTable = pgTable("budgets", {
 
 export const categorisationRulesTable = pgTable("categorisation_rules", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    user_id: integer("user_id").references(() => usersTable.id),
+    user_id: uuid("user_id").notNull(),
     pattern: varchar({ length: 255 }).notNull(),
     category_id: integer("category_id").references(() => categoriesTable.id),
     priority: integer().notNull(),

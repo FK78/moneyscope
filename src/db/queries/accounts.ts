@@ -1,8 +1,8 @@
 import { db } from '@/index'; // you'll create this shared db instance
 import { transactionsTable, accountsTable } from '@/db/schema';
-import { eq, count } from 'drizzle-orm';
+import { eq, count, sql } from 'drizzle-orm';
 
-export async function getAccountsWithDetails(userId: number) {
+export async function getAccountsWithDetails(userId: string | number) {
   return await db.select({
     id: accountsTable.id,
     accountName: accountsTable.name,
@@ -13,6 +13,6 @@ export async function getAccountsWithDetails(userId: number) {
   })
     .from(accountsTable)
     .leftJoin(transactionsTable, eq(transactionsTable.account_id, accountsTable.id))
-    .where(eq(accountsTable.user_id, userId))
+    .where(sql`${accountsTable.user_id}::text = ${userId}`)
     .groupBy(accountsTable.id, accountsTable.name, accountsTable.type, accountsTable.balance, accountsTable.currency);
 }
