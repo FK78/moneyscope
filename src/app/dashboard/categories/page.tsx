@@ -6,26 +6,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getCategoriesByUser } from "@/db/queries/categories";
+import { getCategorisationRules } from "@/db/queries/categorisation-rules";
 import {
   getMonthlyCategorySpendTrend,
   getTotalSpendByCategoryThisMonth,
 } from "@/db/queries/transactions";
 import { CategoryFormDialog } from "@/components/CategoryFormDialog";
 import { DeleteCategoryButton } from "@/components/DeleteCategoryButton";
+import { CategorisationRuleFormDialog } from "@/components/CategorisationRuleForm";
+import { DeleteRuleButton } from "@/components/DeleteRuleButton";
 import { getCategoryIcon } from "@/lib/categoryIcons";
 import { getCurrentUserId } from "@/lib/auth";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
-import { Tags } from "lucide-react";
+import { Tags, Wand2 } from "lucide-react";
 import { CategoryCharts } from "@/components/CategoryCharts";
 
 export default async function Categories() {
   const userId = await getCurrentUserId();
 
-  const [categories, topSpendRows, monthlySpendRows, baseCurrency] = await Promise.all([
+  const [categories, topSpendRows, monthlySpendRows, baseCurrency, rules] = await Promise.all([
     getCategoriesByUser(userId),
     getTotalSpendByCategoryThisMonth(userId),
     getMonthlyCategorySpendTrend(userId, 6),
     getUserBaseCurrency(userId),
+    getCategorisationRules(userId),
   ]);
 
   const topSpendByCategory = topSpendRows
@@ -103,6 +107,73 @@ export default async function Categories() {
                 </div>
                 );
               })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {/* Categorisation Rules */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 pb-2">
+                <Wand2 className="h-4 w-4" />
+                Auto-Categorisation Rules
+              </CardTitle>
+              <CardDescription>
+                Transactions matching these patterns will be automatically assigned a category.
+              </CardDescription>
+            </div>
+            {categories.length > 0 && (
+              <CategorisationRuleFormDialog categories={categories} />
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {rules.length === 0 ? (
+            <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-10 text-center">
+              <Wand2 className="h-10 w-10 opacity-40" />
+              <div>
+                <p className="text-sm font-medium text-foreground">No rules yet</p>
+                <p className="text-xs">Add a rule to auto-categorise transactions by description.</p>
+              </div>
+              {categories.length > 0 && (
+                <CategorisationRuleFormDialog categories={categories} />
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {rules.map((rule) => (
+                <div
+                  key={rule.id}
+                  className="flex items-center gap-3 rounded-lg border p-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
+                        {rule.pattern}
+                      </code>
+                      <span className="text-xs text-muted-foreground">→</span>
+                      {rule.categoryColor && (
+                        <span className="flex items-center gap-1.5 text-xs">
+                          <span
+                            className="inline-block h-2 w-2 rounded-full"
+                            style={{ backgroundColor: rule.categoryColor }}
+                          />
+                          {rule.categoryName}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Priority: {rule.priority}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <CategorisationRuleFormDialog categories={categories} rule={rule} />
+                    <DeleteRuleButton ruleId={rule.id} />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

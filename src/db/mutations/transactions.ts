@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { eq, sql } from 'drizzle-orm';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBudgetAlerts } from '@/lib/budget-alerts';
+import { matchCategorisationRule } from '@/lib/auto-categorise';
 
 type Transaction = typeof transactionsTable.$inferInsert;
 type RecurringPattern = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'yearly';
@@ -44,14 +45,24 @@ export async function addTransaction(formData: FormData) {
     ? computeNextRecurringDate(txnDate, recurringPattern)
     : null;
 
+  const description = formData.get('description') as string;
+  let categoryId = Number(formData.get('category_id'));
+
+  // Auto-categorise if no category was selected
+  if (!categoryId) {
+    const userId = await getCurrentUserId();
+    const matched = await matchCategorisationRule(userId, description);
+    if (matched) categoryId = matched;
+  }
+
   const [result] = await createTransaction({
     type,
     amount,
-    description: formData.get('description') as string,
+    description,
     is_recurring: isRecurring,
     date: txnDate,
     account_id: accountId,
-    category_id: Number(formData.get('category_id')),
+    category_id: categoryId || Number(formData.get('category_id')),
     recurring_pattern: recurringPattern as typeof transactionsTable.$inferInsert['recurring_pattern'],
     next_recurring_date: nextRecurringDate,
   });
