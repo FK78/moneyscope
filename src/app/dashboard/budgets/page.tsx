@@ -161,42 +161,45 @@ export default async function Budgets() {
 
             return (
               <Card key={budget.id}>
-                <CardHeader className="flex flex-row items-start justify-between pb-3">
-                  <div className="flex items-center gap-2">
-                    {Icon ? (
-                      <div
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: budget.budgetColor + "20" }}
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {Icon ? (
+                        <div
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                          style={{ backgroundColor: budget.budgetColor + "20" }}
+                        >
+                          <Icon className="h-3.5 w-3.5" style={{ color: budget.budgetColor }} />
+                        </div>
+                      ) : (
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: budget.budgetColor }}
+                        />
+                      )}
+                      <CardTitle className="text-base">{budget.budgetCategory}</CardTitle>
+                      <Badge
+                        variant={
+                          isOver
+                            ? "destructive"
+                            : isNear
+                              ? "outline"
+                              : "secondary"
+                        }
+                        className="text-[10px] px-1.5 py-0"
                       >
-                        <Icon className="h-3.5 w-3.5" style={{ color: budget.budgetColor }} />
-                      </div>
-                    ) : (
-                      <div
-                        className="h-3 w-3 rounded-full"
-                        style={{ backgroundColor: budget.budgetColor }}
+                        {isOver ? "Over" : isNear ? "Almost" : "On track"}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-0.5">
+                      <BudgetAlertSettings
+                        budgetId={budget.id}
+                        budgetCategory={budget.budgetCategory}
+                        prefs={alertPrefsMap.get(budget.id) ?? null}
                       />
-                    )}
-                    <CardTitle className="text-base">{budget.budgetCategory}</CardTitle>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Badge
-                      variant={
-                        isOver
-                          ? "destructive"
-                          : isNear
-                            ? "outline"
-                            : "secondary"
-                      }
-                    >
-                      {isOver ? "Over" : isNear ? "Almost" : "On track"}
-                    </Badge>
-                    <BudgetAlertSettings
-                      budgetId={budget.id}
-                      budgetCategory={budget.budgetCategory}
-                      prefs={alertPrefsMap.get(budget.id) ?? null}
-                    />
-                    <BudgetFormDialog categories={categories} budget={budget} />
-                    <DeleteBudgetButton budget={budget} />
+                      <BudgetFormDialog categories={categories} budget={budget} />
+                      <DeleteBudgetButton budget={budget} />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
