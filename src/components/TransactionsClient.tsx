@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback, useTransition } from "react";
+import { useState, useEffect, useCallback, useMemo, useTransition } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +38,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ArrowDownLeft, ArrowUpRight, CheckCircle2, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+} from "@tanstack/react-table";
+import { ArrowDownLeft, ArrowUpDown, ArrowUpRight, CheckCircle2, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { deleteTransaction } from "@/db/mutations/transactions";
 import { formatCurrency } from "@/lib/formatCurrency";
 
@@ -151,6 +161,8 @@ export function TransactionsClient({
 }) {
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
   const [deleteResult, setDeleteResult] = useState<{ status: "success" | "error"; description?: string } | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
   const canCreateTransaction = accounts.length > 0 && categories.length > 0;
   const resolvedCurrentPage = totalTransactions > 0 ? currentPage : 1;
   const totalPages = Math.max(1, Math.ceil(totalTransactions / pageSize));
@@ -175,12 +187,162 @@ export function TransactionsClient({
     setHighlightedIds(new Set([id]));
   }, []);
 
+  const columns = useMemo<ColumnDef<Transaction>[]>(() => ([
+    {
+      accessorKey: "accountName",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-8 px-2"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Account Name
+          <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span className="font-medium">{row.original.accountName}</span>
+      ),
+    },
+    {
+      accessorKey: "description",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-8 px-2"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Description
+          <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.description}</span>
+      ),
+    },
+    {
+      accessorFn: (row) => row.category ?? "—",
+      id: "category",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-8 px-2"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Category
+          <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.category ?? "—"}</span>
+      ),
+    },
+    {
+      accessorFn: (row) => row.date ?? "",
+      id: "date",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-2 h-8 px-2"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date
+          <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+        </Button>
+      ),
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{formatDate(row.original.date)}</span>
+      ),
+    },
+    {
+      accessorKey: "amount",
+      enableGlobalFilter: false,
+      header: ({ column }) => (
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Amount
+            <ArrowUpDown className="ml-2 h-3.5 w-3.5" />
+          </Button>
+        </div>
+      ),
+      cell: ({ row }) => (
+        <span
+          className={`font-semibold tabular-nums ${row.original.type === "income"
+            ? "text-emerald-600"
+            : "text-red-600"
+            }`}
+        >
+          {row.original.type === "income" ? "+" : "−"}
+          {formatCurrency(row.original.amount, currency)}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      enableSorting: false,
+      enableGlobalFilter: false,
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          {row.original.is_recurring && (
+            <Badge variant="secondary" className="gap-1">
+              <RefreshCw className="h-3 w-3" />
+              Recurring
+            </Badge>
+          )}
+          <TransactionFormDialog
+            transaction={row.original}
+            accounts={accounts}
+            categories={categories}
+            onSaved={(ids) => {
+              const [editedId] = ids;
+              if (editedId !== undefined) {
+                handleTransactionEdited(editedId);
+              }
+            }}
+          />
+          <DeleteTransactionButton
+            transaction={row.original}
+            onDeleted={(desc) => setDeleteResult({ status: "success", description: desc })}
+            onDeleteFailed={() => setDeleteResult({ status: "error" })}
+          />
+        </div>
+      ),
+    },
+  ]), [accounts, categories, currency, handleTransactionEdited]);
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: transactions,
+    columns,
+    getRowId: (row) => String(row.id),
+    state: {
+      sorting,
+      globalFilter,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions
     .filter((t) => t.type === "expense")
     .reduce((sum, t) => sum + t.amount, 0);
+  const rows = table.getRowModel().rows;
 
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
@@ -294,79 +456,89 @@ export function TransactionsClient({
                 </Button>
               </div>
             )
+          ) : rows.length === 0 ? (
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Input
+                  value={globalFilter}
+                  onChange={(event) => setGlobalFilter(event.target.value)}
+                  placeholder="Search account, description, or category"
+                  className="max-w-sm"
+                />
+              </div>
+              <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
+                <Receipt className="h-10 w-10 opacity-40" />
+                <div>
+                  <p className="text-sm font-medium">No matching transactions</p>
+                  <p className="text-xs">
+                    Try adjusting your search for this page.
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : (
             <>
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Input
+                  value={globalFilter}
+                  onChange={(event) => setGlobalFilter(event.target.value)}
+                  placeholder="Search account, description, or category"
+                  className="max-w-sm"
+                />
+              </div>
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Account Name</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="w-[80px]" />
-                  </TableRow>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead
+                          key={header.id}
+                          className={header.column.id === "amount" ? "text-right" : header.column.id === "actions" ? "w-[80px]" : undefined}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
                 </TableHeader>
                 <TableBody>
-                  {transactions.map((transaction) => (
+                  {rows.map((row) => (
                     <TableRow
-                      key={transaction.id}
+                      key={row.id}
                       className={
-                        highlightedIds.has(transaction.id)
+                        highlightedIds.has(row.original.id)
                           ? "animate-highlight-row"
                           : ""
                       }
                     >
-                      <TableCell className="font-medium">
-                        {transaction.accountName}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {transaction.description}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {transaction.category ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatDate(transaction.date)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right font-semibold tabular-nums ${transaction.type === "income"
-                          ? "text-emerald-600"
-                          : "text-red-600"
-                          }`}
-                      >
-                        {transaction.type === "income" ? "+" : "−"}
-                        {formatCurrency(transaction.amount, currency)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {transaction.is_recurring && (
-                            <Badge variant="secondary" className="gap-1">
-                              <RefreshCw className="h-3 w-3" />
-                              Recurring
-                            </Badge>
-                          )}
-                          <TransactionFormDialog
-                            transaction={transaction}
-                            accounts={accounts}
-                            categories={categories}
-                            onSaved={(ids) => handleTransactionEdited(ids[0])}
-                          />
-                          <DeleteTransactionButton
-                            transaction={transaction}
-                            onDeleted={(desc) => setDeleteResult({ status: "success", description: desc })}
-                            onDeleteFailed={() => setDeleteResult({ status: "error" })}
-                          />
-                        </div>
-                      </TableCell>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell
+                          key={cell.id}
+                          className={cell.column.id === "amount" ? "text-right" : undefined}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
               <div className="mt-4 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-muted-foreground text-xs">
-                  Showing {startIndex}–{endIndex} of {totalTransactions} transactions
-                </p>
+                <div className="space-y-1">
+                  <p className="text-muted-foreground text-xs">
+                    Showing {startIndex}–{endIndex} of {totalTransactions} transactions
+                  </p>
+                  {globalFilter.trim() !== "" && (
+                    <p className="text-muted-foreground text-xs">
+                      {rows.length} matching transaction{rows.length === 1 ? "" : "s"} on this page
+                    </p>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   {resolvedCurrentPage > 1 ? (
                     <Button asChild size="sm" variant="outline">
