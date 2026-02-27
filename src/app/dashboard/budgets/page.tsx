@@ -13,10 +13,15 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { getBudgets } from "@/db/queries/budgets";
+import { getCategoriesByUser } from "@/db/queries/categories";
 import { formatCurrency } from "@/lib/formatCurrency";
+import { AddBudgetForm } from "@/components/AddBudgetForm";
 
 export default async function Budgets() {
-  const budgets = await getBudgets(1);
+  const [budgets, categories] = await Promise.all([
+    getBudgets(1),
+    getCategoriesByUser(1),
+  ]);
 
   const totalBudget = budgets.reduce((sum, b) => sum + b.budgetAmount, 0);
   const totalSpent = budgets.reduce((sum, b) => sum + b.budgetSpent, 0);
@@ -24,11 +29,14 @@ export default async function Budgets() {
   const overBudgetCount = budgets.filter((b) => b.budgetSpent > b.budgetAmount).length;
   return (
     <div className="mx-auto max-w-5xl space-y-8 p-6 md:p-10">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Budgets</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Track your spending against monthly budgets.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Budgets</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Track your spending against monthly budgets.
+          </p>
+        </div>
+        <AddBudgetForm categories={categories} />
       </div>
 
       {/* Summary */}
