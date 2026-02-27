@@ -144,3 +144,83 @@ export async function getTotalSpendByCategoryThisMonth(userId: string){
     ))
     .groupBy(categoriesTable.name, categoriesTable.color);
 }
+
+export type MonthlyCashflowPoint = {
+  month: string;
+  income: number;
+  expenses: number;
+  net: number;
+};
+
+function getMonthKey(date: Date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${date.getFullYear()}-${month}`;
+}
+
+function getRecentMonthKeys(monthCount: number) {
+  const safeMonthCount = Math.max(1, Math.floor(monthCount));
+  const now = new Date();
+  const keys: string[] = [];
+
+  for (let monthsAgo = safeMonthCount - 1; monthsAgo >= 0; monthsAgo -= 1) {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+    keys.push(getMonthKey(monthDate));
+  }
+
+  return keys;
+}
+
+export async function getMonthlyIncomeExpenseTrend(userId: string, monthCount = 6): Promise<MonthlyCashflowPoint[]> {
+  const monthKeys = getRecentMonthKeys(monthCount);
+  const [startMonth] = monthKeys;
+  const now = new Date();
+  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const endMonth = endDate.toISOString().split('T')[0];
+
+  const rows = await db
+    .select({
+      month: sql<string>`to_char(date_trunc('month', ${transactionsTable.date}), 'YYYY-MM')`,
+      type: transactionsTable.type,
+      total: sql<number>`coalesce(sum(${transactionsTable.amount}), 0)`.mapWith(Number),
+    })
+    .from(transactionsTable)
+    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
+    .where(and(
+      eq(accountsTable.user_id, userId),
+      gte(transactionsTable.date, `${startMonth}-01`),
+      lt(transactionsTable.date, endMonth),
+    ))
+    .groupBy(
+      sql`date_trunc('month', ${transactionsTable.date})`,
+      transactionsTable.type,
+    )
+    .orderBy(sql`date_trunc('month', ${transactionsTable.date})`);
+
+  const monthMap = new Map<string, { income: number; expenses: number }>();
+  for (const monthKey of monthKeys) {
+    monthMap.set(monthKey, { income: 0, expenses: 0 });
+  }
+
+  for (const row of rows) {
+    const existing = monthMap.get(row.month);
+    if (!existing) {
+      continue;
+    }
+
+    if (row.type === 'income') {
+      existing.income = row.total;
+    } else if (row.type === 'expense') {
+      existing.expenses = row.total;
+    }
+  }
+
+  return monthKeys.map((month) => {
+    const totals = monthMap.get(month) ?? { income: 0, expenses: 0 };
+    return {
+      month,
+      income: totals.income,
+      expenses: totals.expenses,
+      net: totals.income - totals.expenses,
+    };
+  });
+}

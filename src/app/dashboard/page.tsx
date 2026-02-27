@@ -21,6 +21,7 @@ import {
   getTotalExpensesLastMonth,
   getSavingsDepositsThisMonth,
   getTotalSpendByCategoryThisMonth,
+  getMonthlyIncomeExpenseTrend,
 } from "@/db/queries/transactions";
 import { getAccountsWithDetails } from "@/db/queries/accounts";
 import { parseTotal } from "@/lib/parseTotal";
@@ -32,11 +33,12 @@ import { SpendCategoryRow } from "@/components/SpendCategoryRow";
 import { getCurrentUserId } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
+import { CashflowCharts } from "@/components/CashflowCharts";
 
 export default async function Home() {
   const userId = await getCurrentUserId();
   
-  const [lastFiveTransactions, accounts, expensesRows, incomeRows, lastMonthIncomeRows, lastMonthExpensesRows, savingsThisMonthRows, spendByCategory, baseCurrency] =
+  const [lastFiveTransactions, accounts, expensesRows, incomeRows, lastMonthIncomeRows, lastMonthExpensesRows, savingsThisMonthRows, spendByCategory, monthlyTrend, baseCurrency] =
     await Promise.all([
       getLatestFiveTransactionsWithDetails(userId),
       getAccountsWithDetails(userId),
@@ -46,6 +48,7 @@ export default async function Home() {
       getTotalExpensesLastMonth(userId),
       getSavingsDepositsThisMonth(userId),
       getTotalSpendByCategoryThisMonth(userId),
+      getMonthlyIncomeExpenseTrend(userId, 6),
       getUserBaseCurrency(userId),
     ]);
 
@@ -78,6 +81,8 @@ export default async function Home() {
           <SummaryCard key={card.title} {...card} />
         ))}
       </div>
+
+      <CashflowCharts data={monthlyTrend} currency={baseCurrency} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent transactions */}
