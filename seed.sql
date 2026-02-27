@@ -18,8 +18,7 @@ CREATE TABLE categories (
   user_id UUID NOT NULL,
   name VARCHAR(255) NOT NULL,
   color VARCHAR(8) NOT NULL,
-  icon VARCHAR(255),
-  is_default BOOLEAN NOT NULL
+  icon VARCHAR(255)
 );
 
 CREATE TABLE transactions (
@@ -51,3 +50,27 @@ CREATE TABLE categorisation_rules (
   category_id INTEGER REFERENCES categories(id) ON DELETE CASCADE,
   priority INTEGER NOT NULL
 );
+
+CREATE TABLE default_category_templates (
+  id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  name VARCHAR(255) NOT NULL,
+  color VARCHAR(8) NOT NULL,
+  icon VARCHAR(255),
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT true
+);
+
+CREATE TABLE user_onboarding (
+  user_id UUID PRIMARY KEY,
+  use_default_categories BOOLEAN NOT NULL DEFAULT false,
+  completed BOOLEAN NOT NULL DEFAULT false,
+  completed_at TIMESTAMPTZ
+);
+
+-- Seed data
+
+INSERT INTO default_category_templates (name, color, icon, sort_order, is_active) VALUES
+  ('Groceries', '#4CAF50', 'shopping-cart', 1, true),
+  ('Rent', '#F44336', 'home', 2, true),
+  ('Salary', '#2196F3', 'briefcase', 3, true),
+  ('Utilities', '#607D8B', 'zap', 4, true);

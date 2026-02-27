@@ -8,6 +8,8 @@ A personal finance dashboard for tracking accounts, budgets, transactions, and s
 - **Transactions** — Full CRUD for income and expenses with category labels, account attribution, and recurring indicators. Adding, editing, or deleting a transaction automatically adjusts the linked account balance.
 - **Budgets** — Set monthly or weekly budgets per category and track spending progress with visual indicators
 - **Dashboard** — Summary cards, recent transactions, spending breakdown by category, and account overview in one place
+- **Onboarding Journey** — Guided setup flow for accounts, categories, and budgets with skip options on every step (including skip-all)
+- **Default Category Templates** — Default categories are stored in the database and can be opted in/out during onboarding
 - **Smart Summary Cards** — Net worth, total assets, and total liabilities classified by account type (not balance sign). Negative balances display correctly with red text and minus sign.
 - **Confirmation Dialogs** — Delete actions use a two-step flow: confirmation dialog → success/error result dialog
 - **Accessibility** — All dialogs include screen-reader-friendly titles
@@ -122,14 +124,15 @@ src/
 
 ## Database Schema
 
-Six tables managed by Drizzle ORM with foreign key cascade deletes:
+Seven core tables plus onboarding/template tables managed by Drizzle ORM:
 
-- **users** — email, name, preferred currency
 - **accounts** — per-user financial accounts (checking, savings, credit_card, investment). Balance updated automatically on transaction changes.
 - **categories** — spending categories with color and icon
 - **transactions** — income/expense records linked to accounts and categories. Cascade-deleted when parent account is removed.
 - **budgets** — spending limits per category with monthly/weekly periods
 - **categorisation_rules** — pattern-based auto-categorisation rules
+- **default_category_templates** — database-backed default category definitions used during onboarding
+- **user_onboarding** — per-user onboarding state and default-category preference
 
 ## License
 

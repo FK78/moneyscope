@@ -16,6 +16,7 @@ export async function addBudget(formData: FormData) {
     period: formData.get('period') as 'monthly' | 'weekly',
     start_date: formData.get('start_date') as string,
   }).returning({ id: budgetsTable.id });
+  revalidatePath('/onboarding');
   revalidatePath('/dashboard/budgets');
   return result;
 }

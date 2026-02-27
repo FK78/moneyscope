@@ -1,13 +1,23 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/DashboardNav";
 import { AuthButton } from "@/components/AuthButton";
+import { getCurrentUserId } from "@/lib/auth";
+import { hasCompletedOnboarding } from "@/db/queries/onboarding";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const userId = await getCurrentUserId();
+  const onboardingComplete = await hasCompletedOnboarding(userId);
+
+  if (!onboardingComplete) {
+    redirect("/onboarding");
+  }
+
   return (
     <div className="min-h-screen">
       <nav className="border-border sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">

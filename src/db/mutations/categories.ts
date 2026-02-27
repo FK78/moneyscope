@@ -14,8 +14,8 @@ export async function addCategory(formData: FormData) {
     name: formData.get('name') as string,
     color: formData.get('color') as string,
     icon: (formData.get('icon') as string) || null,
-    is_default: false,
   }).returning({ id: categoriesTable.id });
+  revalidatePath('/onboarding');
   revalidatePath('/dashboard/categories');
   return result;
 }

@@ -16,6 +16,7 @@ export async function addAccount(formData: FormData) {
     balance: parseFloat(formData.get('balance') as string),
     currency: (formData.get('currency') as string) || 'USD',
   }).returning({ id: accountsTable.id });
+  revalidatePath('/onboarding');
   revalidatePath('/dashboard/accounts');
   return result;
 }
