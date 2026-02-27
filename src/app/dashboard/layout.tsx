@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { DashboardNav } from "@/components/DashboardNav";
 import { AuthButton } from "@/components/AuthButton";
+import { NotificationBellServer } from "@/components/NotificationBellServer";
 import { getCurrentUserId } from "@/lib/auth";
 import { hasCompletedOnboarding } from "@/db/queries/onboarding";
 
@@ -31,9 +32,14 @@ export default async function DashboardLayout({
             </Link>
             <DashboardNav />
           </div>
+          <div className="flex items-center gap-2">
+            <Suspense>
+              <NotificationBellServer />
+            </Suspense>
             <Suspense>
               <AuthButton />
             </Suspense>
+          </div>
         </div>
       </nav>
       {children}
