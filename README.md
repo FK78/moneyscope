@@ -1,4 +1,4 @@
-# MoneyScope
+# Flowdget
 
 A personal finance dashboard for tracking accounts, budgets, transactions, and spending — built with **Next.js 16**, **Drizzle ORM**, and **Supabase Postgres**.
 
@@ -71,8 +71,8 @@ src/
 1. **Clone the repo**
 
    ```bash
-   git clone https://github.com/FK78/moneyscope.git
-   cd moneyscope
+   git clone https://github.com/FK78/flowdget.git
+   cd flowdget
    ```
 
 2. **Install dependencies**
