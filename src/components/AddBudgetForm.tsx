@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, CheckCircle2, Loader2 } from "lucide-react";
+import { Plus, Pencil, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { addBudget } from "@/db/mutations/budgets";
+import { addBudget, editBudget } from "@/db/mutations/budgets";
 
 type Category = {
   id: number;
@@ -29,7 +29,19 @@ type Category = {
   color: string;
 };
 
-export function AddBudgetForm({ categories }: { categories: Category[] }) {
+type Budget = {
+  id: number;
+  budgetCategory: string;
+  budgetColor: string;
+  budgetAmount: number;
+  budgetSpent: number;
+  budgetPeriod: string | null;
+  category_id: number | null;
+  start_date: string | null;
+};
+
+export function BudgetFormDialog({ categories, budget }: { categories: Category[]; budget?: Budget }) {
+  const isEdit = !!budget;
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"form" | "success">("form");
   const [isPending, startTransition] = useTransition();
@@ -48,7 +60,11 @@ export function AddBudgetForm({ categories }: { categories: Category[] }) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
-      await addBudget(formData);
+      if (isEdit) {
+        await editBudget(budget.id, formData);
+      } else {
+        await addBudget(formData);
+      }
       setView("success");
     });
   }
@@ -61,40 +77,52 @@ export function AddBudgetForm({ categories }: { categories: Category[] }) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">
-          <Plus className="h-4 w-4" />
-          Add Budget
-        </Button>
+        {isEdit ? (
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button size="sm">
+            <Plus className="h-4 w-4" />
+            Add Budget
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         {view === "success" ? (
           <>
             <DialogHeader className="sr-only">
-              <DialogTitle>Budget added</DialogTitle>
+              <DialogTitle>
+                {isEdit ? "Budget updated" : "Budget added"}
+              </DialogTitle>
             </DialogHeader>
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Budget added!</h3>
+                <h3 className="text-lg font-semibold">
+                  {isEdit ? "Budget updated!" : "Budget added!"}
+                </h3>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Your new budget has been created.
+                  {isEdit ? "Your budget has been updated." : "Your new budget has been created."}
                 </p>
               </div>
             </div>
             <DialogFooter className="flex gap-2 sm:justify-center">
-              <Button variant="outline" onClick={handleAddAnother}>
-                <Plus className="mr-1 h-4 w-4" />
-                Add Another
-              </Button>
+              {!isEdit && (
+                <Button variant="outline" onClick={handleAddAnother}>
+                  <Plus className="mr-1 h-4 w-4" />
+                  Add Another
+                </Button>
+              )}
               <Button onClick={() => handleOpenChange(false)}>Done</Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Add Budget</DialogTitle>
+              <DialogTitle>{isEdit ? "Edit Budget" : "Add Budget"}</DialogTitle>
               <DialogDescription>
-                Set a spending limit for a category.
+                {isEdit ? "Update the budget details." : "Set a spending limit for a category."}
               </DialogDescription>
             </DialogHeader>
             <form
@@ -105,7 +133,7 @@ export function AddBudgetForm({ categories }: { categories: Category[] }) {
               {/* Category */}
               <div className="grid gap-2">
                 <Label htmlFor="category_id">Category</Label>
-                <Select name="category_id" required>
+                <Select name="category_id" defaultValue={budget ? String(budget.category_id) : undefined} required>
                   <SelectTrigger id="category_id">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -134,6 +162,7 @@ export function AddBudgetForm({ categories }: { categories: Category[] }) {
                   type="number"
                   step="0.01"
                   min="0.01"
+                  defaultValue={budget?.budgetAmount?.toString() ?? ""}
                   placeholder="0.00"
                   required
                 />
@@ -142,7 +171,7 @@ export function AddBudgetForm({ categories }: { categories: Category[] }) {
               {/* Period */}
               <div className="grid gap-2">
                 <Label htmlFor="period">Period</Label>
-                <Select name="period" defaultValue="monthly">
+                <Select name="period" defaultValue={budget?.budgetPeriod ?? "monthly"}>
                   <SelectTrigger id="period">
                     <SelectValue placeholder="Select period" />
                   </SelectTrigger>
@@ -160,7 +189,7 @@ export function AddBudgetForm({ categories }: { categories: Category[] }) {
                   id="start_date"
                   name="start_date"
                   type="date"
-                  defaultValue={today}
+                  defaultValue={budget?.start_date ?? today}
                   required
                 />
               </div>
@@ -171,7 +200,7 @@ export function AddBudgetForm({ categories }: { categories: Category[] }) {
                 </Button>
                 <Button type="submit" disabled={isPending}>
                   {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Add Budget
+                  {isEdit ? "Save Changes" : "Add Budget"}
                 </Button>
               </DialogFooter>
             </form>
