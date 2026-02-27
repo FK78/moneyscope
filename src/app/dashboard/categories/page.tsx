@@ -10,6 +10,7 @@ import { CategoryFormDialog } from "@/components/CategoryFormDialog";
 import { DeleteCategoryButton } from "@/components/DeleteCategoryButton";
 import { getCategoryIcon } from "@/lib/categoryIcons";
 import { getCurrentUserId } from "@/lib/auth";
+import { Tags } from "lucide-react";
 
 export default async function Categories() {
   const userId = await getCurrentUserId();
@@ -37,9 +38,14 @@ export default async function Categories() {
         </CardHeader>
         <CardContent>
           {categories.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No categories yet.
-            </p>
+            <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <Tags className="h-10 w-10 opacity-40" />
+              <div>
+                <p className="text-sm font-medium text-foreground">No categories yet</p>
+                <p className="text-xs">Create categories to organize your transactions.</p>
+              </div>
+              <CategoryFormDialog />
+            </div>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {categories.map((cat) => {

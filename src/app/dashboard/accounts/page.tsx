@@ -107,67 +107,80 @@ export default async function Accounts() {
       </div>
 
       {/* Account cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {accounts.map((account) => {
-          const config = typeConfig[account.type ?? ""] ?? {
-            label: account.type,
-            variant: "secondary" as const,
-          };
-          return (
-            <Card key={account.id}>
-              <CardHeader className="flex flex-row items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                    {(() => { const Icon = typeIcons[account.type ?? ""] ?? Wallet; return <Icon className="text-muted-foreground h-5 w-5" />; })()}
+      {accounts.length === 0 ? (
+        <Card>
+          <CardContent className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-12 text-center">
+            <Wallet className="h-10 w-10 opacity-40" />
+            <div>
+              <p className="text-sm font-medium text-foreground">No accounts yet</p>
+              <p className="text-xs">Create your first account to start tracking balances.</p>
+            </div>
+            <AccountFormDialog />
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {accounts.map((account) => {
+            const config = typeConfig[account.type ?? ""] ?? {
+              label: account.type,
+              variant: "secondary" as const,
+            };
+            return (
+              <Card key={account.id}>
+                <CardHeader className="flex flex-row items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+                      {(() => { const Icon = typeIcons[account.type ?? ""] ?? Wallet; return <Icon className="text-muted-foreground h-5 w-5" />; })()}
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">{account.accountName}</CardTitle>
+                      <CardDescription className="text-xs">
+                        {account.currency} &middot; {account.transactions}{" "}
+                        transactions
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-base">{account.accountName}</CardTitle>
-                    <CardDescription className="text-xs">
-                      {account.currency} &middot; {account.transactions}{" "}
-                      transactions
-                    </CardDescription>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={config.variant}>{config.label}</Badge>
+                    <AccountFormDialog account={account} />
+                    <DeleteAccountButton account={account} />
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={config.variant}>{config.label}</Badge>
-                  <AccountFormDialog account={account} />
-                  <DeleteAccountButton account={account} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p
-                  className={`text-2xl font-bold tabular-nums ${account.balance >= 0 ? "text-foreground" : "text-red-600"
-                    }`}
-                >
-                  {account.balance < 0 ? "−" : ""}
-                  {formatCurrency(account.balance)}
-                </p>
-                {/* Balance bar relative to total assets */}
-                <div className="mt-3">
-                  <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-                    <div
-                      className={`h-full rounded-full ${account.balance >= 0 ? "bg-emerald-500" : "bg-red-500"
-                        }`}
-                      style={{
-                        width: `${totalAbsolute > 0 ? Math.min(
-                          (Math.abs(account.balance) / totalAbsolute) * 100,
-                          100
-                        ) : 0}%`,
-                      }}
-                    />
-                  </div>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {totalAbsolute > 0 ? ((Math.abs(account.balance) / totalAbsolute) * 100).toFixed(
-                      1
-                    ) : "0.0"}
-                    % of total
+                </CardHeader>
+                <CardContent>
+                  <p
+                    className={`text-2xl font-bold tabular-nums ${account.balance >= 0 ? "text-foreground" : "text-red-600"
+                      }`}
+                  >
+                    {account.balance < 0 ? "−" : ""}
+                    {formatCurrency(account.balance)}
                   </p>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  {/* Balance bar relative to total assets */}
+                  <div className="mt-3">
+                    <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+                      <div
+                        className={`h-full rounded-full ${account.balance >= 0 ? "bg-emerald-500" : "bg-red-500"
+                          }`}
+                        style={{
+                          width: `${totalAbsolute > 0 ? Math.min(
+                            (Math.abs(account.balance) / totalAbsolute) * 100,
+                            100
+                          ) : 0}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      {totalAbsolute > 0 ? ((Math.abs(account.balance) / totalAbsolute) * 100).toFixed(
+                        1
+                      ) : "0.0"}
+                      % of total
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

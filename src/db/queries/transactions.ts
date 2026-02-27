@@ -1,6 +1,6 @@
 import { db } from '@/index';
 import { transactionsTable, categoriesTable, accountsTable } from '@/db/schema';
-import { and, desc, eq, ne, sum, gte, lt } from 'drizzle-orm';
+import { and, desc, eq, ne, sql, sum, gte, lt } from 'drizzle-orm';
 
 function getMonthRange(monthsAgo = 0) {
   const now = new Date();
@@ -36,6 +36,33 @@ function baseTransactionsQuery(userId: string) {
 
 export async function getTransactionsWithDetails(userId: string) {
   return await baseTransactionsQuery(userId).orderBy(desc(transactionsTable.date));
+}
+
+export async function getTransactionsCount(userId: string) {
+  const [row] = await db
+    .select({ total: sql<number>`count(*)`.mapWith(Number) })
+    .from(transactionsTable)
+    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
+    .where(eq(accountsTable.user_id, userId));
+
+  return row?.total ?? 0;
+}
+
+export async function getTransactionsWithDetailsPaginated(
+  userId: string,
+  page: number,
+  pageSize: number
+) {
+  const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const safePageSize = Number.isFinite(pageSize) && pageSize > 0
+    ? Math.floor(pageSize)
+    : 10;
+  const offset = (safePage - 1) * safePageSize;
+
+  return await baseTransactionsQuery(userId)
+    .orderBy(desc(transactionsTable.date), desc(transactionsTable.id))
+    .limit(safePageSize)
+    .offset(offset);
 }
 
 export async function getLatestFiveTransactionsWithDetails(userId: string) {

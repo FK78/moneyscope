@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -29,6 +30,7 @@ import { TransactionRow } from "@/components/TransactionRow";
 import { AccountCard } from "@/components/AccountCard";
 import { SpendCategoryRow } from "@/components/SpendCategoryRow";
 import { getCurrentUserId } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
 
 export default async function Home() {
   const userId = await getCurrentUserId();
@@ -82,21 +84,31 @@ export default async function Home() {
             <CardDescription>Your last 5 transactions.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lastFiveTransactions.map((t) => (
-                  <TransactionRow key={t.id} t={t} />
-                ))}
-              </TableBody>
-            </Table>
+            {lastFiveTransactions.length === 0 ? (
+              <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-10 text-center">
+                <p className="text-sm font-medium text-foreground">No transactions yet</p>
+                <p className="text-xs">Add a transaction to populate your dashboard.</p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/dashboard/transactions">Go to transactions</Link>
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lastFiveTransactions.map((t) => (
+                    <TransactionRow key={t.id} t={t} />
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -107,15 +119,25 @@ export default async function Home() {
             <CardDescription>This month&apos;s breakdown.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {spendByCategory.map((cat) => (
-              <SpendCategoryRow
-                key={cat.category}
-                category={cat.category}
-                total={cat.total}
-                color={cat.color}
-                income={income}
-              />
-            ))}
+            {spendByCategory.length === 0 ? (
+              <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-6 text-center">
+                <p className="text-sm font-medium text-foreground">No category spend yet</p>
+                <p className="text-xs">Your expense breakdown appears once transactions are added.</p>
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/dashboard/transactions">Add transaction</Link>
+                </Button>
+              </div>
+            ) : (
+              spendByCategory.map((cat) => (
+                <SpendCategoryRow
+                  key={cat.category}
+                  category={cat.category}
+                  total={cat.total}
+                  color={cat.color}
+                  income={income}
+                />
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
@@ -127,14 +149,23 @@ export default async function Home() {
           <CardDescription>Overview of your linked accounts.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {accounts.map((account) => (
-              <AccountCard key={account.accountName} account={account} />
-            ))}
-          </div>
+          {accounts.length === 0 ? (
+            <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-10 text-center">
+              <p className="text-sm font-medium text-foreground">No accounts linked</p>
+              <p className="text-xs">Create an account to start tracking balances and transactions.</p>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/dashboard/accounts">Go to accounts</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {accounts.map((account) => (
+                <AccountCard key={account.accountName} account={account} />
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
-
