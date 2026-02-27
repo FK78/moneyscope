@@ -8,6 +8,8 @@ import {
 } from '@/db/schema';
 import { eq, sum, and, gte, lt, desc } from 'drizzle-orm';
 import { createNotification } from '@/db/mutations/budget-alerts';
+import { sendBudgetAlertEmail } from '@/lib/email';
+import { createClient } from '@/lib/supabase/server';
 
 function getMonthRange(monthsAgo = 0) {
   const now = new Date();
@@ -105,6 +107,15 @@ export async function checkBudgetAlerts(userId: string): Promise<TriggeredAlert[
   const budgets = await getBudgetsWithSpendAndPrefs(userId);
   const triggered: TriggeredAlert[] = [];
 
+  // Pre-fetch user email for potential email alerts
+  let userEmail: string | undefined;
+  const needsEmail = budgets.some(b => b.emailAlerts);
+  if (needsEmail) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    userEmail = user?.email ?? undefined;
+  }
+
   for (const b of budgets) {
     if (!b.browserAlerts && !b.emailAlerts) continue;
     if (b.budgetAmount <= 0) continue;
@@ -122,6 +133,19 @@ export async function checkBudgetAlerts(userId: string): Promise<TriggeredAlert[
           message,
           emailAlerts: b.emailAlerts,
         });
+
+        if (b.emailAlerts && userEmail) {
+          await sendBudgetAlertEmail(
+            userEmail,
+            `${b.categoryName} budget exceeded`,
+            'over_budget',
+            b.categoryName,
+            percent,
+            b.budgetAmount,
+            b.spent,
+            'USD',
+          );
+        }
       }
     } else if (percent >= b.threshold) {
       const already = await hasRecentNotification(userId, b.budgetId, 'threshold_warning');
@@ -134,6 +158,19 @@ export async function checkBudgetAlerts(userId: string): Promise<TriggeredAlert[
           message,
           emailAlerts: b.emailAlerts,
         });
+
+        if (b.emailAlerts && userEmail) {
+          await sendBudgetAlertEmail(
+            userEmail,
+            `${b.categoryName} budget at ${percent.toFixed(0)}%`,
+            'threshold_warning',
+            b.categoryName,
+            percent,
+            b.budgetAmount,
+            b.spent,
+            'USD',
+          );
+        }
       }
     }
   }
