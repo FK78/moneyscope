@@ -1,6 +1,10 @@
-# Flowdget
+<p align="center">
+  <img src="public/logo.svg" alt="Flowdget logo" width="120" height="120" />
+</p>
 
-A personal finance dashboard for tracking accounts, budgets, transactions, and spending — built with **Next.js 16**, **Drizzle ORM**, and **Supabase Postgres**.
+<h1 align="center">Flowdget</h1>
+
+<p align="center">A personal finance dashboard for tracking accounts, budgets, transactions, and spending — built with <strong>Next.js 16</strong>, <strong>Drizzle ORM</strong>, and <strong>Supabase Postgres</strong>.</p>
 
 ## Features
 
