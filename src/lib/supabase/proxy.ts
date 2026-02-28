@@ -1,15 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { hasEnvVars } from "../utils";
 
 export async function updateSession(request: NextRequest) {
-  // Disable SSL verification in development
-  if (process.env.NODE_ENV === 'development') {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  }
-
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // If the env vars are not set, skip proxy check. You can remove this
+  // once you setup the project.
+  if (!hasEnvVars) {
+    return supabaseResponse;
+  }
 
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
@@ -31,21 +33,6 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
-        },
-      },
-      // Add SSL options for development
-      global: {
-        fetch: async (url, options = {}) => {
-          // In development, disable SSL verification
-          if (process.env.NODE_ENV === 'development') {
-            const https = await import('https');
-            const agent = new https.Agent({ rejectUnauthorized: false });
-            return fetch(url, {
-              ...options,
-              agent,
-            } as RequestInit);
-          }
-          return fetch(url, options);
         },
       },
     },
