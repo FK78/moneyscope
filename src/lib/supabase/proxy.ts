@@ -7,14 +7,11 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  // If the env vars are not set, skip proxy check. You can remove this
-  // once you setup the project.
+  // If the env vars are not set, skip proxy check.
   if (!hasEnvVars) {
     return supabaseResponse;
   }
 
-  // With Fluid compute, don't put this client in a global environment
-  // variable. Always create a new one on each request.
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -39,21 +36,22 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Do not run code between createServerClient and
-  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
-  // issues with users being randomly logged out.
+  // supabase.auth.getUser(). A simple mistake could make it very hard to
+  // debug issues with users being randomly logged out.
 
-  // IMPORTANT: If you remove getClaims() and you use server-side rendering
-  // with the Supabase client, your users may be randomly logged out.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  // IMPORTANT: Always use supabase.auth.getUser() to protect pages and user data.
+  // Never trust supabase.auth.getSession() inside server code such as proxy.
+  // It isn't guaranteed to revalidate the Auth token.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (
-    request.nextUrl.pathname !== "/" &&
     !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    !request.nextUrl.pathname.startsWith("/auth") &&
+    request.nextUrl.pathname !== "/"
   ) {
-    // no user, potentially respond by redirecting the user to the login page
+    // no user, redirect to login (but allow public pages and auth routes)
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
