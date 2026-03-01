@@ -9,6 +9,7 @@ import {
   Wallet,
   Target,
   Tags,
+  Trophy,
   Menu,
   X,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard/accounts", label: "Accounts", icon: Wallet },
   { href: "/dashboard/categories", label: "Categories", icon: Tags },
   { href: "/dashboard/budgets", label: "Budgets", icon: Target },
+  { href: "/dashboard/goals", label: "Goals", icon: Trophy },
 ];
 
 export function DashboardNav() {
