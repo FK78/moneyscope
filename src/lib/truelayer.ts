@@ -63,6 +63,7 @@ export interface TrueLayerTransaction {
 export function buildAuthLink(): string {
   const clientId = requireEnv('TRUELAYER_CLIENT_ID');
   const redirectUri = `${requireEnv('NEXT_PUBLIC_SITE_URL')}/api/truelayer/callback`;
+  console.log('Redirect URI:', redirectUri); // check this in your terminal
 
   const params = new URLSearchParams({
     response_type: 'code',
