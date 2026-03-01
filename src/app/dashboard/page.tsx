@@ -14,17 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  getTotalExpensesOfTransactionsThisMonth,
   getLatestFiveTransactionsWithDetails,
-  getTotalIncomeOfTransactionsThisMonth,
-  getTotalIncomeLastMonth,
-  getTotalExpensesLastMonth,
-  getSavingsDepositsThisMonth,
+  getTotalsByType,
+  getSavingsDepositTotal,
   getTotalSpendByCategoryThisMonth,
   getMonthlyIncomeExpenseTrend,
 } from "@/db/queries/transactions";
 import { getAccountsWithDetails } from "@/db/queries/accounts";
-import { parseTotal } from "@/lib/parseTotal";
+import { getMonthRange } from "@/lib/date";
 import { getSummaryCards } from "@/lib/summaryCards";
 import { SummaryCard } from "@/components/SummaryCard";
 import { TransactionRow } from "@/components/TransactionRow";
@@ -38,33 +35,31 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
   const userId = await getCurrentUserId();
+  const thisMonth = getMonthRange(0);
+  const lastMonth = getMonthRange(1);
 
-  const [lastFiveTransactions, accounts, expensesRows, incomeRows, lastMonthIncomeRows, lastMonthExpensesRows, savingsThisMonthRows, spendByCategory, monthlyTrend, baseCurrency] =
+  const [lastFiveTransactions, accounts, income, expenses, lastMonthIncome, lastMonthExpenses, savingsThisMonth, spendByCategory, monthlyTrend, baseCurrency] =
     await Promise.all([
       getLatestFiveTransactionsWithDetails(userId),
       getAccountsWithDetails(userId),
-      getTotalExpensesOfTransactionsThisMonth(userId),
-      getTotalIncomeOfTransactionsThisMonth(userId),
-      getTotalIncomeLastMonth(userId),
-      getTotalExpensesLastMonth(userId),
-      getSavingsDepositsThisMonth(userId),
+      getTotalsByType(userId, 'income', thisMonth.start, thisMonth.end),
+      getTotalsByType(userId, 'expense', thisMonth.start, thisMonth.end),
+      getTotalsByType(userId, 'income', lastMonth.start, lastMonth.end),
+      getTotalsByType(userId, 'expense', lastMonth.start, lastMonth.end),
+      getSavingsDepositTotal(userId, thisMonth.start, thisMonth.end),
       getTotalSpendByCategoryThisMonth(userId),
       getMonthlyIncomeExpenseTrend(userId, 6),
       getUserBaseCurrency(userId),
     ]);
 
-  const income = parseTotal(incomeRows);
-  const expenses = parseTotal(expensesRows);
-  const lastMonthIncome = parseTotal(lastMonthIncomeRows);
-  const lastMonthExpenses = parseTotal(lastMonthExpensesRows);
   const savingsBalance = accounts
-    .filter((a) => a.type === "savings")
-    .reduce((sum, a) => sum + a.balance, 0);
+    .filter((a: { type: string | null }) => a.type === "savings")
+    .reduce((sum: number, a: { balance: number }) => sum + a.balance, 0);
 
   const summaryCards = getSummaryCards(
     income, expenses,
     lastMonthIncome, lastMonthExpenses,
-    savingsBalance, parseTotal(savingsThisMonthRows),
+    savingsBalance, savingsThisMonth,
     baseCurrency,
   );
 

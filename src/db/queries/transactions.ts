@@ -1,16 +1,7 @@
 import { db } from '@/index';
 import { transactionsTable, categoriesTable, accountsTable } from '@/db/schema';
 import { and, desc, eq, ne, sql, sum, gte, lte, lt } from 'drizzle-orm';
-
-function getMonthRange(monthsAgo = 0) {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
-  const end = new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 1);
-  return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0],
-  };
-}
+import { getMonthRange, getRecentMonthKeys, getRecentDayKeys, getTomorrowString, getNextMonthFirstString } from '@/lib/date';
 
 const transactionSelect = {
   id: transactionsTable.id,
@@ -32,10 +23,6 @@ function baseTransactionsQuery(userId: string) {
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
     .where(eq(accountsTable.user_id, userId))
     .$dynamic();
-}
-
-export async function getTransactionsWithDetails(userId: string) {
-  return await baseTransactionsQuery(userId).orderBy(desc(transactionsTable.date));
 }
 
 export type ExportTransaction = {
@@ -143,61 +130,24 @@ export async function getLatestFiveTransactionsWithDetails(userId: string) {
     .limit(5);
 }
 
-function getTotalByType(userId: string, type: 'income' | 'expense', monthsAgo = 0) {
-  const { start, end } = getMonthRange(monthsAgo);
-  return db.select({ total: sum(transactionsTable.amount) })
-    .from(transactionsTable)
-    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
-    .where(
-      and(
-        eq(accountsTable.user_id, userId),
-        eq(transactionsTable.type, type),
-        gte(transactionsTable.date, start),
-        lt(transactionsTable.date, end)
-      )
-    );
-}
-
-export async function getTotalIncomeOfTransactionsThisMonth(userId: string) {
-  return await getTotalByType(userId, 'income');
-}
-
-export async function getTotalExpensesOfTransactionsThisMonth(userId: string) {
-  return await getTotalByType(userId, 'expense');
-}
-
-export async function getTotalIncomeLastMonth(userId: string) {
-  return await getTotalByType(userId, 'income', 1);
-}
-
-export async function getTotalExpensesLastMonth(userId: string) {
-  return await getTotalByType(userId, 'expense', 1);
-}
-
-function getSavingsDeposits(userId: string, monthsAgo = 0) {
-  const { start, end } = getMonthRange(monthsAgo);
-  return db.select({ total: sum(transactionsTable.amount) })
+export async function getSavingsDepositTotal(userId: string, startDate: string, endDate: string): Promise<number> {
+  const [row] = await db
+    .select({ total: sum(transactionsTable.amount) })
     .from(transactionsTable)
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
     .where(
       and(
         eq(accountsTable.user_id, userId),
         eq(accountsTable.type, 'savings'),
-        gte(transactionsTable.date, start),
-        lt(transactionsTable.date, end)
+        gte(transactionsTable.date, startDate),
+        lt(transactionsTable.date, endDate),
       )
     );
+
+  return Number(row?.total ?? 0);
 }
 
-export async function getSavingsDepositsThisMonth(userId: string) {
-  return await getSavingsDeposits(userId);
-}
-
-export async function getSavingsDepositsLastMonth(userId: string) {
-  return await getSavingsDeposits(userId, 1);
-}
-
-export async function getTotalSpendByCategoryThisMonth(userId: string){
+export async function getTotalSpendByCategoryThisMonth(userId: string) {
   const { start, end } = getMonthRange();
 
   return await db.select({
@@ -245,47 +195,10 @@ export type MonthlyCategorySpendPoint = {
   total: number;
 };
 
-function getMonthKey(date: Date) {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${date.getFullYear()}-${month}`;
-}
-
-function getRecentMonthKeys(monthCount: number) {
-  const safeMonthCount = Math.max(1, Math.floor(monthCount));
-  const now = new Date();
-  const keys: string[] = [];
-
-  for (let monthsAgo = safeMonthCount - 1; monthsAgo >= 0; monthsAgo -= 1) {
-    const monthDate = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
-    keys.push(getMonthKey(monthDate));
-  }
-
-  return keys;
-}
-
-function getDayKey(date: Date) {
-  return date.toISOString().split('T')[0];
-}
-
-function getRecentDayKeys(dayCount: number) {
-  const safeDayCount = Math.max(1, Math.floor(dayCount));
-  const now = new Date();
-  const keys: string[] = [];
-
-  for (let daysAgo = safeDayCount - 1; daysAgo >= 0; daysAgo -= 1) {
-    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
-    keys.push(getDayKey(day));
-  }
-
-  return keys;
-}
-
 export async function getMonthlyIncomeExpenseTrend(userId: string, monthCount = 6): Promise<MonthlyCashflowPoint[]> {
   const monthKeys = getRecentMonthKeys(monthCount);
   const [startMonth] = monthKeys;
-  const now = new Date();
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const endMonth = endDate.toISOString().split('T')[0];
+  const endMonth = getNextMonthFirstString();
 
   const rows = await db
     .select({
@@ -338,10 +251,7 @@ export async function getMonthlyIncomeExpenseTrend(userId: string, monthCount = 
 export async function getDailyIncomeExpenseTrend(userId: string, dayCount = 30): Promise<DailyCashflowPoint[]> {
   const dayKeys = getRecentDayKeys(dayCount);
   const [startDay] = dayKeys;
-  const now = new Date();
-  const endDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
-    .toISOString()
-    .split('T')[0];
+  const endDay = getTomorrowString();
 
   const rows = await db
     .select({
@@ -394,10 +304,7 @@ export async function getDailyIncomeExpenseTrend(userId: string, dayCount = 30):
 export async function getDailyExpenseByCategory(userId: string, dayCount = 30): Promise<DailyCategoryExpensePoint[]> {
   const dayKeys = getRecentDayKeys(dayCount);
   const [startDay] = dayKeys;
-  const now = new Date();
-  const endDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
-    .toISOString()
-    .split('T')[0];
+  const endDay = getTomorrowString();
 
   const rows = await db
     .select({
@@ -428,10 +335,7 @@ export async function getDailyExpenseByCategory(userId: string, dayCount = 30): 
 export async function getMonthlyCategorySpendTrend(userId: string, monthCount = 6): Promise<MonthlyCategorySpendPoint[]> {
   const monthKeys = getRecentMonthKeys(monthCount);
   const [startMonth] = monthKeys;
-  const now = new Date();
-  const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-    .toISOString()
-    .split('T')[0];
+  const endMonth = getNextMonthFirstString();
 
   const rows = await db
     .select({
