@@ -78,12 +78,16 @@ export async function getTransactionsForExport(
     .orderBy(desc(transactionsTable.date), desc(transactionsTable.id));
 }
 
-export async function getTransactionsCount(userId: string) {
+export async function getTransactionsCount(userId: string, startDate?: string, endDate?: string) {
+  const conditions = [eq(accountsTable.user_id, userId)];
+  if (startDate) conditions.push(gte(transactionsTable.date, startDate));
+  if (endDate) conditions.push(lte(transactionsTable.date, endDate));
+
   const [row] = await db
     .select({ total: sql<number>`count(*)`.mapWith(Number) })
     .from(transactionsTable)
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
-    .where(eq(accountsTable.user_id, userId));
+    .where(and(...conditions));
 
   return row?.total ?? 0;
 }
@@ -91,7 +95,9 @@ export async function getTransactionsCount(userId: string) {
 export async function getTransactionsWithDetailsPaginated(
   userId: string,
   page: number,
-  pageSize: number
+  pageSize: number,
+  startDate?: string,
+  endDate?: string,
 ) {
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const safePageSize = Number.isFinite(pageSize) && pageSize > 0
@@ -99,10 +105,36 @@ export async function getTransactionsWithDetailsPaginated(
     : 10;
   const offset = (safePage - 1) * safePageSize;
 
-  return await baseTransactionsQuery(userId)
+  let query = baseTransactionsQuery(userId);
+  if (startDate) query = query.where(gte(transactionsTable.date, startDate));
+  if (endDate) query = query.where(lte(transactionsTable.date, endDate));
+
+  return await query
     .orderBy(desc(transactionsTable.date), desc(transactionsTable.id))
     .limit(safePageSize)
     .offset(offset);
+}
+
+export async function getTotalsByType(
+  userId: string,
+  type: 'income' | 'expense',
+  startDate?: string,
+  endDate?: string,
+) {
+  const conditions = [
+    eq(accountsTable.user_id, userId),
+    eq(transactionsTable.type, type),
+  ];
+  if (startDate) conditions.push(gte(transactionsTable.date, startDate));
+  if (endDate) conditions.push(lte(transactionsTable.date, endDate));
+
+  const [row] = await db
+    .select({ total: sum(transactionsTable.amount) })
+    .from(transactionsTable)
+    .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
+    .where(and(...conditions));
+
+  return Number(row?.total ?? 0);
 }
 
 export async function getLatestFiveTransactionsWithDetails(userId: string) {

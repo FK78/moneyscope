@@ -141,8 +141,13 @@ function formatDate(date: string | null) {
   }).format(new Date(date));
 }
 
-function getPageHref(page: number) {
-  return page <= 1 ? "/dashboard/transactions" : `/dashboard/transactions?page=${page}`;
+function getPageHref(page: number, startDate?: string, endDate?: string) {
+  const params = new URLSearchParams();
+  if (page > 1) params.set("page", String(page));
+  if (startDate) params.set("startDate", startDate);
+  if (endDate) params.set("endDate", endDate);
+  const qs = params.toString();
+  return `/dashboard/transactions${qs ? `?${qs}` : ""}`;
 }
 
 function formatDateInput(date: Date) {
@@ -165,6 +170,10 @@ export function TransactionsClient({
   currentPage,
   pageSize,
   totalTransactions,
+  totalIncome,
+  totalExpenses,
+  startDate: activeStartDate,
+  endDate: activeEndDate,
   dailyTrend,
   dailyCategoryExpenses,
   currency,
@@ -175,6 +184,10 @@ export function TransactionsClient({
   currentPage: number;
   pageSize: number;
   totalTransactions: number;
+  totalIncome: number;
+  totalExpenses: number;
+  startDate?: string;
+  endDate?: string;
   dailyTrend: DailyCashflowPoint[];
   dailyCategoryExpenses: DailyCategoryExpensePoint[];
   currency: string;
@@ -183,8 +196,14 @@ export function TransactionsClient({
   const [deleteResult, setDeleteResult] = useState<{ status: "success" | "error"; description?: string } | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [filterStartDate, setFilterStartDate] = useState(activeStartDate ?? "");
+  const [filterEndDate, setFilterEndDate] = useState(activeEndDate ?? "");
   const [exportStartDate, setExportStartDate] = useState(() => formatDateInput(addDays(new Date(), -30)));
   const [exportEndDate, setExportEndDate] = useState(() => formatDateInput(new Date()));
+  const isFilterActive = !!activeStartDate || !!activeEndDate;
+  const dateLabel = isFilterActive
+    ? `${activeStartDate ?? "start"} to ${activeEndDate ?? "now"}`
+    : "All time";
   const canCreateTransaction = accounts.length > 0 && categories.length > 0;
   const isExportRangeValid = exportStartDate !== ""
     && exportEndDate !== ""
@@ -373,12 +392,6 @@ export function TransactionsClient({
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  const totalIncome = transactions
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const totalExpenses = transactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
   const rows = table.getRowModel().rows;
 
   return (
@@ -405,13 +418,56 @@ export function TransactionsClient({
         )}
       </div>
 
+      {/* Date range filter */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="filter-start-date">From</Label>
+                <Input
+                  id="filter-start-date"
+                  type="date"
+                  value={filterStartDate}
+                  onChange={(e) => setFilterStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="filter-end-date">To</Label>
+                <Input
+                  id="filter-end-date"
+                  type="date"
+                  value={filterEndDate}
+                  onChange={(e) => setFilterEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button asChild>
+                <Link href={getPageHref(1, filterStartDate || undefined, filterEndDate || undefined)}>
+                  Apply Filter
+                </Link>
+              </Button>
+              {isFilterActive && (
+                <Button variant="outline" asChild>
+                  <Link href="/dashboard/transactions">Clear</Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
-              Total Transactions
-            </CardDescription>
+            <div>
+              <CardDescription className="text-sm font-medium">
+                Total Transactions
+              </CardDescription>
+              <p className="text-muted-foreground text-xs">{dateLabel}</p>
+            </div>
             <Receipt className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -420,9 +476,12 @@ export function TransactionsClient({
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
-              Income
-            </CardDescription>
+            <div>
+              <CardDescription className="text-sm font-medium">
+                Total Income
+              </CardDescription>
+              <p className="text-muted-foreground text-xs">{dateLabel}</p>
+            </div>
             <ArrowUpRight className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
@@ -433,9 +492,12 @@ export function TransactionsClient({
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
-              Expenses
-            </CardDescription>
+            <div>
+              <CardDescription className="text-sm font-medium">
+                Total Expenses
+              </CardDescription>
+              <p className="text-muted-foreground text-xs">{dateLabel}</p>
+            </div>
             <ArrowDownLeft className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -623,7 +685,7 @@ export function TransactionsClient({
                 <div className="flex items-center gap-2">
                   {resolvedCurrentPage > 1 ? (
                     <Button asChild size="sm" variant="outline">
-                      <Link href={getPageHref(resolvedCurrentPage - 1)}>Previous</Link>
+                      <Link href={getPageHref(resolvedCurrentPage - 1, activeStartDate, activeEndDate)}>Previous</Link>
                     </Button>
                   ) : (
                     <Button size="sm" variant="outline" disabled>
@@ -635,7 +697,7 @@ export function TransactionsClient({
                   </p>
                   {resolvedCurrentPage < totalPages ? (
                     <Button asChild size="sm" variant="outline">
-                      <Link href={getPageHref(resolvedCurrentPage + 1)}>Next</Link>
+                      <Link href={getPageHref(resolvedCurrentPage + 1, activeStartDate, activeEndDate)}>Next</Link>
                     </Button>
                   ) : (
                     <Button size="sm" variant="outline" disabled>
