@@ -1,5 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
+import { AuthLayout } from "@/components/AuthLayout";
+import { XCircle } from "lucide-react";
 
 async function ErrorContent({
   searchParams,
@@ -9,17 +11,11 @@ async function ErrorContent({
   const params = await searchParams;
 
   return (
-    <>
-      {params?.error ? (
-        <p className="text-sm text-muted-foreground">
-          Code error: {params.error}
-        </p>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          An unspecified error occurred.
-        </p>
-      )}
-    </>
+    <p className="text-center text-sm text-muted-foreground">
+      {params?.error
+        ? `Error: ${params.error}`
+        : "An unspecified error occurred. Please try again."}
+    </p>
   );
 }
 
@@ -29,23 +25,21 @@ export default function Page({
   searchParams: Promise<{ error: string }>;
 }) {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">
-                Sorry, something went wrong.
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Suspense>
-                <ErrorContent searchParams={searchParams} />
-              </Suspense>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </div>
+    <AuthLayout backHref="/auth/login" backLabel="Back to login">
+      <Card>
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+            <XCircle className="h-6 w-6 text-destructive" />
+          </div>
+          <CardTitle className="text-2xl">Something went wrong</CardTitle>
+          <CardDescription>We couldn&apos;t complete your request</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Suspense>
+            <ErrorContent searchParams={searchParams} />
+          </Suspense>
+        </CardContent>
+      </Card>
+    </AuthLayout>
   );
 }

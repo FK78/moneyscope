@@ -1,11 +1,10 @@
 import { UpdatePasswordForm } from "@/components/UpdatePasswordForm";
+import { AuthLayout } from "@/components/AuthLayout";
 
 export default function UpdatePasswordPage() {
   return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <UpdatePasswordForm />
-      </div>
-    </div>
+    <AuthLayout backHref="/auth/login" backLabel="Back to login">
+      <UpdatePasswordForm />
+    </AuthLayout>
   );
 }
