@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bgGrad)" />
+  <rect x="140" y="280" width="40" height="100" rx="6" fill="white" opacity="0.3" />
+  <rect x="200" y="240" width="40" height="140" rx="6" fill="white" opacity="0.4" />
+  <rect x="260" y="215" width="40" height="165" rx="6" fill="white" opacity="0.5" />
+  <rect x="320" y="190" width="40" height="190" rx="6" fill="white" opacity="0.4" />
+  <path d="M 110 300 C 160 265, 195 335, 235 280 S 305 195, 355 225 S 395 175, 410 158" stroke="white" stroke-width="10" stroke-linecap="round" fill="none" opacity="0.95" />
+  <circle cx="410" cy="158" r="14" fill="white" />
+  <text x="410" y="165" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="18" fill="url(#bgGrad)">$</text>
+</svg>
