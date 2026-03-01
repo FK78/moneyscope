@@ -19,15 +19,18 @@ import {
   getSavingsDepositTotal,
   getTotalSpendByCategoryThisMonth,
   getMonthlyIncomeExpenseTrend,
+  getMonthlyCategorySpendTrend,
 } from "@/db/queries/transactions";
 import { getAccountsWithDetails } from "@/db/queries/accounts";
 import { getBudgets } from "@/db/queries/budgets";
 import { getMonthRange } from "@/lib/date";
 import { getSummaryCards } from "@/lib/summaryCards";
+import { generateInsights } from "@/lib/insights";
 import { SummaryCard } from "@/components/SummaryCard";
 import { TransactionRow } from "@/components/TransactionRow";
 import { AccountCard } from "@/components/AccountCard";
 import { SpendCategoryRow } from "@/components/SpendCategoryRow";
+import { SpendingInsights } from "@/components/SpendingInsights";
 import { getCurrentUserId } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
@@ -58,6 +61,7 @@ export default async function Home() {
     savingsThisMonth,
     spendByCategory,
     monthlyTrend,
+    categoryTrend,
     baseCurrency,
   ] = await Promise.all([
     getLatestFiveTransactionsWithDetails(userId),
@@ -70,6 +74,7 @@ export default async function Home() {
     getSavingsDepositTotal(userId, thisMonth.start, thisMonth.end),
     getTotalSpendByCategoryThisMonth(userId),
     getMonthlyIncomeExpenseTrend(userId, 6),
+    getMonthlyCategorySpendTrend(userId, 4),
     getUserBaseCurrency(userId),
   ]);
 
@@ -114,6 +119,8 @@ export default async function Home() {
     0
   ).getDate();
   const monthProgress = Math.round((dayOfMonth / daysInMonth) * 100);
+
+  const spendingInsights = generateInsights(monthlyTrend, categoryTrend, baseCurrency);
 
   const budgetsAtRisk = budgets.filter((b) => {
     const pct = b.budgetAmount > 0 ? (b.budgetSpent / b.budgetAmount) * 100 : 0;
@@ -216,7 +223,19 @@ export default async function Home() {
         ))}
       </div>
 
-      {/* Charts */}
+      {/* Spending Insights + Charts */}
+      {spendingInsights.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Spending Insights</CardTitle>
+            <CardDescription>Notable patterns and anomalies based on your recent activity.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SpendingInsights insights={spendingInsights} />
+          </CardContent>
+        </Card>
+      )}
+
       <CashflowCharts data={monthlyTrend} currency={baseCurrency} />
 
       {/* Budget progress + Spending by category */}
