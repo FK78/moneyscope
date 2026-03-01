@@ -1,8 +1,9 @@
 import { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 
-export function SummaryCard({ title, value, change, icon: Icon, color }: {
+export function SummaryCard({ title, description, value, change, icon: Icon, color }: {
   title: string;
+  description: string;
   value: string;
   change: string;
   icon: LucideIcon;
@@ -11,9 +12,14 @@ export function SummaryCard({ title, value, change, icon: Icon, color }: {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardDescription className="text-sm font-medium">
-          {title}
-        </CardDescription>
+        <div>
+          <CardDescription className="text-sm font-medium">
+            {title}
+          </CardDescription>
+          <p className="text-muted-foreground text-xs">
+            {description}
+          </p>
+        </div>
         <Icon className="text-muted-foreground h-4 w-4" />
       </CardHeader>
       <CardContent>

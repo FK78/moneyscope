@@ -23,6 +23,7 @@ export function getSummaryCards(
   return [
     {
       title: "Total Balance",
+      description: "Income minus expenses this month",
       value: `${totalBalance < 0 ? "−" : ""}${formatCurrency(totalBalance, currency)}`,
       change: pctChange(totalBalance, lastMonthBalance),
       icon: DollarSign,
@@ -30,6 +31,7 @@ export function getSummaryCards(
     },
     {
       title: "Income",
+      description: "Total income this month",
       value: formatCurrency(income, currency),
       change: pctChange(income, lastMonthIncome),
       icon: ArrowUpRight,
@@ -37,6 +39,7 @@ export function getSummaryCards(
     },
     {
       title: "Expenses",
+      description: "Total spending this month",
       value: formatCurrency(expenses, currency),
       change: pctChange(expenses, lastMonthExpenses),
       icon: ArrowDownLeft,
@@ -44,8 +47,9 @@ export function getSummaryCards(
     },
     {
       title: "Savings",
+      description: "Total across savings accounts",
       value: formatCurrency(savingsBalance, currency),
-      change: `+${formatCurrency(savingsThisMonth, currency)} this month`,
+      change: `+${formatCurrency(savingsThisMonth, currency)} deposited this month`,
       icon: PiggyBank,
       color: "text-blue-600",
     },

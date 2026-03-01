@@ -4,6 +4,7 @@ import {
   getDailyIncomeExpenseTrend,
   getTransactionsCount,
   getTransactionsWithDetailsPaginated,
+  getTotalsByType,
 } from "@/db/queries/transactions";
 import { getAccountsWithDetails } from "@/db/queries/accounts";
 import { getCategoriesByUser } from "@/db/queries/categories";
@@ -23,20 +24,29 @@ function normalizePage(value?: string) {
   return Math.floor(parsed);
 }
 
+function normalizeDate(value?: string): string | undefined {
+  if (!value) return undefined;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;
+}
+
 export default async function Transactions({
   searchParams,
 }: {
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<{ page?: string; startDate?: string; endDate?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const requestedPage = normalizePage(resolvedSearchParams?.page);
+  const startDate = normalizeDate(resolvedSearchParams?.startDate);
+  const endDate = normalizeDate(resolvedSearchParams?.endDate);
   const userId = await getCurrentUserId();
 
-  const [transactions, accounts, categories, totalTransactions, dailyTrend, dailyCategoryExpenses, baseCurrency] = await Promise.all([
-    getTransactionsWithDetailsPaginated(userId, requestedPage, PAGE_SIZE),
+  const [transactions, accounts, categories, totalTransactions, totalIncome, totalExpenses, dailyTrend, dailyCategoryExpenses, baseCurrency] = await Promise.all([
+    getTransactionsWithDetailsPaginated(userId, requestedPage, PAGE_SIZE, startDate, endDate),
     getAccountsWithDetails(userId),
     getCategoriesByUser(userId),
-    getTransactionsCount(userId),
+    getTransactionsCount(userId, startDate, endDate),
+    getTotalsByType(userId, 'income', startDate, endDate),
+    getTotalsByType(userId, 'expense', startDate, endDate),
     getDailyIncomeExpenseTrend(userId, 90),
     getDailyExpenseByCategory(userId, 90),
     getUserBaseCurrency(userId),
@@ -44,7 +54,12 @@ export default async function Transactions({
   const totalPages = Math.max(1, Math.ceil(totalTransactions / PAGE_SIZE));
 
   if (totalTransactions > 0 && requestedPage > totalPages) {
-    redirect(totalPages === 1 ? "/dashboard/transactions" : `/dashboard/transactions?page=${totalPages}`);
+    const params = new URLSearchParams();
+    if (totalPages > 1) params.set("page", String(totalPages));
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
+    const qs = params.toString();
+    redirect(`/dashboard/transactions${qs ? `?${qs}` : ""}`);
   }
 
   return (
@@ -55,6 +70,10 @@ export default async function Transactions({
       currentPage={requestedPage}
       pageSize={PAGE_SIZE}
       totalTransactions={totalTransactions}
+      totalIncome={totalIncome}
+      totalExpenses={totalExpenses}
+      startDate={startDate}
+      endDate={endDate}
       dailyTrend={dailyTrend}
       dailyCategoryExpenses={dailyCategoryExpenses}
       currency={baseCurrency}
