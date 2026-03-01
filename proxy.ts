@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!claims && request.nextUrl.pathname.startsWith("/dashboard")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
   return await updateSession(request);
