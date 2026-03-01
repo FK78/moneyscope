@@ -67,7 +67,7 @@ export function buildAuthLink(): string {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
-    scope: 'accounts balance transactions',
+    scope: 'info accounts balance transactions offline_access',
     redirect_uri: redirectUri,
     providers: isSandbox() ? 'uk-ob-all uk-oauth-all' : 'uk-ob-all',
   });
