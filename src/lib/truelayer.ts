@@ -9,13 +9,17 @@
 // Environment helpers
 // ---------------------------------------------------------------------------
 
-const isSandbox = () => process.env.TRUELAYER_SANDBOX === 'true';
+const isSandbox = () => process.env.TRUELAYER_SANDBOX === "true";
 
 const authBase = () =>
-  isSandbox() ? 'https://auth.truelayer-sandbox.com' : 'https://auth.truelayer.com';
+  isSandbox()
+    ? "https://auth.truelayer-sandbox.com"
+    : "https://auth.truelayer.com";
 
 const apiBase = () =>
-  isSandbox() ? 'https://api.truelayer-sandbox.com' : 'https://api.truelayer.com';
+  isSandbox()
+    ? "https://api.truelayer-sandbox.com"
+    : "https://api.truelayer.com";
 
 function requireEnv(name: string): string {
   const v = process.env[name];
@@ -61,16 +65,18 @@ export interface TrueLayerTransaction {
 // ---------------------------------------------------------------------------
 
 export function buildAuthLink(): string {
-  const clientId = requireEnv('TRUELAYER_CLIENT_ID');
-  const redirectUri = `${requireEnv('NEXT_PUBLIC_SITE_URL')}/api/truelayer/callback`;
-  console.log('Redirect URI:', redirectUri); // check this in your terminal
+  const clientId = requireEnv("TRUELAYER_CLIENT_ID");
+  const redirectUri = `${requireEnv(
+    "NEXT_PUBLIC_SITE_URL"
+  )}/api/truelayer/callback`;
 
   const params = new URLSearchParams({
-    response_type: 'code',
+    response_type: "code",
     client_id: clientId,
-    scope: 'info accounts balance transactions offline_access',
+    scope: "info accounts balance transactions offline_access",
     redirect_uri: redirectUri,
-    providers: isSandbox() ? 'uk-ob-all uk-oauth-all' : 'uk-ob-all',
+    providers: "uk-ob-all uk-oauth-all uk-cs-mock",
+    nonce: Math.random().toString(36).slice(2),
   });
 
   return `${authBase()}/?${params.toString()}`;
@@ -82,13 +88,15 @@ export function buildAuthLink(): string {
 
 export async function exchangeCode(code: string): Promise<TrueLayerTokens> {
   const res = await fetch(`${authBase()}/connect/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      client_id: requireEnv('TRUELAYER_CLIENT_ID'),
-      client_secret: requireEnv('TRUELAYER_CLIENT_SECRET'),
-      redirect_uri: `${requireEnv('NEXT_PUBLIC_SITE_URL')}/api/truelayer/callback`,
+      grant_type: "authorization_code",
+      client_id: requireEnv("TRUELAYER_CLIENT_ID"),
+      client_secret: requireEnv("TRUELAYER_CLIENT_SECRET"),
+      redirect_uri: `${requireEnv(
+        "NEXT_PUBLIC_SITE_URL"
+      )}/api/truelayer/callback`,
       code,
     }),
   });
@@ -101,14 +109,16 @@ export async function exchangeCode(code: string): Promise<TrueLayerTokens> {
   return res.json() as Promise<TrueLayerTokens>;
 }
 
-export async function refreshAccessToken(refreshToken: string): Promise<TrueLayerTokens> {
+export async function refreshAccessToken(
+  refreshToken: string
+): Promise<TrueLayerTokens> {
   const res = await fetch(`${authBase()}/connect/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: requireEnv('TRUELAYER_CLIENT_ID'),
-      client_secret: requireEnv('TRUELAYER_CLIENT_SECRET'),
+      grant_type: "refresh_token",
+      client_id: requireEnv("TRUELAYER_CLIENT_ID"),
+      client_secret: requireEnv("TRUELAYER_CLIENT_SECRET"),
       refresh_token: refreshToken,
     }),
   });
@@ -139,14 +149,19 @@ async function tlGet<T>(path: string, accessToken: string): Promise<T> {
   return json.results as T;
 }
 
-export async function fetchAccounts(accessToken: string): Promise<TrueLayerAccount[]> {
-  return tlGet<TrueLayerAccount[]>('/data/v1/accounts', accessToken);
+export async function fetchAccounts(
+  accessToken: string
+): Promise<TrueLayerAccount[]> {
+  return tlGet<TrueLayerAccount[]>("/data/v1/accounts", accessToken);
 }
 
-export async function fetchBalance(accessToken: string, accountId: string): Promise<TrueLayerBalance> {
+export async function fetchBalance(
+  accessToken: string,
+  accountId: string
+): Promise<TrueLayerBalance> {
   const balances = await tlGet<TrueLayerBalance[]>(
     `/data/v1/accounts/${accountId}/balance`,
-    accessToken,
+    accessToken
   );
   return balances[0];
 }
@@ -155,10 +170,10 @@ export async function fetchTransactions(
   accessToken: string,
   accountId: string,
   from: string,
-  to: string,
+  to: string
 ): Promise<TrueLayerTransaction[]> {
   return tlGet<TrueLayerTransaction[]>(
     `/data/v1/accounts/${accountId}/transactions?from=${from}&to=${to}`,
-    accessToken,
+    accessToken
   );
 }
