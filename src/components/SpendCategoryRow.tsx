@@ -1,14 +1,14 @@
 import { formatCurrency } from "@/lib/formatCurrency";
 
-export function SpendCategoryRow({ category, total, color, income, currency }: {
+export function SpendCategoryRow({ category, total, color, totalExpenses, currency }: {
   category: string;
   total: string | null;
   color: string;
-  income: number;
+  totalExpenses: number;
   currency: string;
 }) {
   const amount = Number(total) || 0;
-  const pct = income > 0 ? (amount / income) * 100 : 0;
+  const pct = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0;
 
   return (
     <div className="space-y-1.5">
