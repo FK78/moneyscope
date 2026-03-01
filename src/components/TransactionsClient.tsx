@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo, useTransition } from "react";
 import {
   Dialog,
@@ -9,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TransactionFormDialog } from "@/components/AddTransactionForm";
+import { ImportCSVDialog } from "@/components/ImportCSVDialog";
 import {
   Table,
   TableBody,
@@ -192,6 +194,7 @@ export function TransactionsClient({
   dailyCategoryExpenses: DailyCategoryExpensePoint[];
   currency: string;
 }) {
+  const router = useRouter();
   const [highlightedIds, setHighlightedIds] = useState<Set<number>>(new Set());
   const [deleteResult, setDeleteResult] = useState<{ status: "success" | "error"; description?: string } | null>(null);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -404,11 +407,17 @@ export function TransactionsClient({
           </p>
         </div>
         {canCreateTransaction ? (
-          <TransactionFormDialog
-            accounts={accounts}
-            categories={categories}
-            onSaved={handleTransactionsAdded}
-          />
+          <div className="flex items-center gap-2">
+            <ImportCSVDialog
+              accounts={accounts}
+              onImported={() => router.refresh()}
+            />
+            <TransactionFormDialog
+              accounts={accounts}
+              categories={categories}
+              onSaved={handleTransactionsAdded}
+            />
+          </div>
         ) : (
           <Button asChild size="sm" variant="outline">
             <Link href={accounts.length === 0 ? "/dashboard/accounts" : "/dashboard/categories"}>
