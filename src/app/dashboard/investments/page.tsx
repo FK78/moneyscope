@@ -269,13 +269,14 @@ export default async function InvestmentsPage() {
           <CardHeader>
             <CardTitle>Holdings</CardTitle>
             <CardDescription>
-              {holdings.filter((h) => h.source === "trading212").length > 0 &&
-                `${holdings.filter((h) => h.source === "trading212").length} from Trading 212`}
-              {holdings.filter((h) => h.source === "trading212").length > 0 &&
-                holdings.filter((h) => h.source === "manual").length > 0 &&
-                " · "}
-              {holdings.filter((h) => h.source === "manual").length > 0 &&
-                `${holdings.filter((h) => h.source === "manual").length} manual`}
+              {(() => {
+                const t212Count = holdings.filter((h) => h.source === "trading212").length;
+                const manualCount = holdings.filter((h) => h.source === "manual").length;
+                return [
+                  t212Count > 0 && `${t212Count} from Trading 212`,
+                  manualCount > 0 && `${manualCount} manual`,
+                ].filter(Boolean).join(" · ");
+              })()}
             </CardDescription>
           </CardHeader>
           <CardContent>
