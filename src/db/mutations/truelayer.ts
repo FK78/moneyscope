@@ -182,9 +182,9 @@ export async function importFromTrueLayer() {
           .where(eq(truelayerConnectionsTable.id, connection.id));
       }
 
-      // Fetch transactions (last 90 days)
+      // Fetch transactions (last 2 years — max supported by most banks via Open Banking)
       const to = new Date().toISOString().split("T")[0];
-      const from = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+      const from = new Date(Date.now() - 730 * 24 * 60 * 60 * 1000)
         .toISOString()
         .split("T")[0];
 

@@ -19,7 +19,7 @@ const transactionSelect = {
 function baseTransactionsQuery(userId: string) {
   return db.select(transactionSelect)
     .from(transactionsTable)
-    .innerJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
+    .leftJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
     .where(eq(accountsTable.user_id, userId))
     .$dynamic();
@@ -32,7 +32,7 @@ export type ExportTransaction = {
   amount: number;
   description: string;
   accountName: string;
-  category: string;
+  category: string | null;
   isRecurring: boolean;
 };
 
@@ -54,7 +54,7 @@ export async function getTransactionsForExport(
     })
     .from(transactionsTable)
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))
-    .innerJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
+    .leftJoin(categoriesTable, eq(transactionsTable.category_id, categoriesTable.id))
     .where(
       and(
         eq(accountsTable.user_id, userId),
