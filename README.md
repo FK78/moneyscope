@@ -4,63 +4,98 @@
 
 <h1 align="center">Flowdget</h1>
 
-<p align="center">A personal finance dashboard for tracking accounts, budgets, transactions, and spending — built with <strong>Next.js 16</strong>, <strong>Drizzle ORM</strong>, and <strong>Supabase Postgres</strong>.</p>
+<p align="center">A personal finance dashboard for tracking accounts, budgets, transactions, investments, and savings goals — built with <strong>Next.js 16</strong>, <strong>Drizzle ORM</strong>, and <strong>Supabase Postgres</strong>.</p>
 
 ## Features
 
-- **Accounts** — View, add, edit, and delete current account, savings, credit card, and investment accounts with live balance tracking
-- **Transactions** — Full CRUD for income and expenses with category labels, account attribution, and recurring indicators. Adding, editing, or deleting a transaction automatically adjusts the linked account balance.
-- **Budgets** — Set monthly or weekly budgets per category and track spending progress with visual indicators
-- **Dashboard** — Summary cards, recent transactions, spending breakdown by category, and account overview in one place
-- **Onboarding Journey** — Guided setup flow for accounts, categories, and budgets with skip options on every step (including skip-all)
-- **Default Category Templates** — Default categories are stored in the database and can be opted in/out during onboarding
-- **Smart Summary Cards** — Net worth, total assets, and total liabilities classified by account type (not balance sign). Negative balances display correctly with red text and minus sign.
-- **Confirmation Dialogs** — Delete actions use a two-step flow: confirmation dialog → success/error result dialog
-- **Accessibility** — All dialogs include screen-reader-friendly titles
+### Core
+- **Dashboard** — Net worth (accounts + investments), summary cards with month-over-month trends, recent transactions, spending by category, cashflow charts, budget progress, and savings goals at a glance
+- **Accounts** — CRUD for current accounts, savings, credit cards, and investment accounts with automatic balance adjustment on transaction changes
+- **Transactions** — Income and expense tracking with category labels, account attribution, recurring patterns (daily/weekly/biweekly/monthly/yearly), CSV import, and data export
+- **Categories** — Custom spending categories with icons, colours, and auto-categorisation rules for imported transactions
+- **Budgets** — Monthly or weekly spending limits per category with progress tracking, threshold alerts (browser + email via Resend), and notification bell
+- **Goals** — Savings goals with target amounts, deadlines, contribution tracking, and progress visualisation
+
+### Investments
+- **Trading 212** — Connect via API key to sync account summary and open positions in real-time (Live and Demo environments)
+- **Manual Holdings** — Search tickers via Yahoo Finance, track quantity and cost basis, auto-refresh prices when stale (>15 min)
+- **Portfolio View** — Summary cards (total value, gain/loss, cost basis), allocation pie chart, per-holding gain/loss bar chart, unified holdings table
+
+### Open Banking
+- **TrueLayer Integration** — Link bank accounts via OAuth, sync accounts and transactions automatically (sandbox and production)
+
+### Security
+- **Encryption at Rest** — Account names, transaction descriptions, TrueLayer tokens, and Trading 212 API keys encrypted with AES-256-GCM
+- **Migration Script** — One-time script to encrypt existing plaintext data in-place
+
+### Other
+- **Onboarding** — Guided setup flow for base currency, accounts, categories, and budgets with skip options
+- **Authentication** — Supabase Auth with login, sign-up, password reset, and email confirmation
+- **Dark Mode** — Theme toggle with system preference support
+- **Responsive** — Mobile-first layout with adaptive navbar (shadcn dropdowns)
 
 ## Tech Stack
 
-| Layer         | Technology                                 |
-| ------------- | ------------------------------------------ |
-| Framework     | Next.js 16 (App Router, Server Components) |
-| Language      | TypeScript                                 |
-| Database      | PostgreSQL via Supabase                    |
-| ORM           | Drizzle ORM + Drizzle Kit                  |
-| DB Driver     | postgres.js                                |
-| Styling       | Tailwind CSS 4                             |
-| UI Components | shadcn/ui, Radix UI, Lucide icons          |
+| Layer         | Technology                                            |
+| ------------- | ----------------------------------------------------- |
+| Framework     | Next.js 16 (App Router, Server Components)            |
+| Language      | TypeScript                                            |
+| Database      | PostgreSQL via Supabase                               |
+| ORM           | Drizzle ORM + Drizzle Kit                             |
+| DB Driver     | postgres.js                                           |
+| Auth          | Supabase Auth (SSR)                                   |
+| Styling       | Tailwind CSS 4                                        |
+| UI Components | shadcn/ui, Radix UI, Lucide icons                     |
+| Charts        | Recharts                                              |
+| Integrations  | TrueLayer (open banking), Trading 212, Yahoo Finance  |
 
 ## Project Structure
 
 ```
 src/
 ├── app/
+│   ├── api/
+│   │   └── truelayer/          # OAuth connect + callback routes
+│   ├── auth/                   # Login, sign-up, password reset pages
 │   ├── dashboard/
-│   │   ├── accounts/       # Accounts page (add, edit, delete)
-│   │   ├── budgets/        # Budgets page
-│   │   ├── transactions/   # Transactions page (add, edit, delete)
-│   │   ├── layout.tsx      # Dashboard shell & navbar
-│   │   └── page.tsx        # Dashboard overview
-│   ├── layout.tsx          # Root layout
-│   └── globals.css
+│   │   ├── accounts/           # Accounts page
+│   │   ├── budgets/            # Budgets page
+│   │   ├── categories/         # Categories + auto-categorisation rules
+│   │   ├── goals/              # Savings goals page
+│   │   ├── investments/        # Portfolio page (T212 + manual holdings)
+│   │   ├── transactions/       # Transactions page + CSV export
+│   │   ├── layout.tsx          # Dashboard shell & navbar
+│   │   └── page.tsx            # Dashboard overview
+│   ├── onboarding/             # Guided first-run setup
+│   └── page.tsx                # Landing page
 ├── components/
-│   ├── ui/                 # shadcn/ui components (dialog, alert-dialog, etc.)
-│   ├── AccountCard.tsx
-│   ├── AddAccountForm.tsx  # Unified add/edit account dialog
-│   ├── AddTransactionForm.tsx # Unified add/edit transaction dialog
-│   ├── DeleteAccountButton.tsx # Delete account with confirmation
-│   ├── SpendCategoryRow.tsx
-│   └── TransactionsClient.tsx  # Transaction list with delete, highlight animation
+│   ├── ui/                     # shadcn/ui primitives
+│   ├── *Charts.tsx             # Recharts wrappers (cashflow, budgets, categories, investments, accounts)
+│   ├── DashboardNav.tsx        # Responsive nav with dropdown menus
+│   ├── ConnectBankButton.tsx   # TrueLayer open banking
+│   ├── ConnectTrading212Dialog.tsx
+│   ├── AddHoldingDialog.tsx    # Manual investment entry with ticker search
+│   ├── ImportCSVDialog.tsx     # CSV transaction import with column mapping
+│   ├── NotificationBell.tsx    # Budget alert notifications
+│   └── ...                     # Form dialogs, delete buttons, auth forms
 ├── db/
-│   ├── schema.ts           # Drizzle table definitions
-│   ├── queries/            # Per-domain query modules
-│   └── mutations/          # Server actions (add, edit, delete)
+│   ├── schema.ts               # Drizzle table definitions
+│   ├── queries/                # Read-only data access (per domain)
+│   ├── mutations/              # Server actions (writes + revalidation)
+│   └── migrations/             # One-off migration scripts
 ├── lib/
-│   ├── formatCurrency.ts   # Shared currency formatter
-│   ├── parseTotal.ts
-│   ├── summaryCards.ts
-│   └── utils.ts
-└── index.ts                # Shared DB instance (postgres.js driver)
+│   ├── encryption.ts           # AES-256-GCM encrypt/decrypt/isEncrypted
+│   ├── investment-value.ts     # Shared investment value calculator
+│   ├── trading212.ts           # Trading 212 API client
+│   ├── truelayer.ts            # TrueLayer API client
+│   ├── yahoo-finance.ts        # Yahoo Finance quote + search
+│   ├── budget-alerts.ts        # Alert threshold checks + email dispatch
+│   ├── recurring-transactions.ts # Auto-generate due recurring transactions
+│   ├── auto-categorise.ts      # Pattern-based category matching
+│   ├── insights.ts             # Spending insights generator
+│   ├── supabase/               # Supabase client (server, browser, middleware)
+│   └── ...                     # Formatters, date helpers, utils
+└── index.ts                    # Shared DB instance (postgres.js driver)
 ```
 
 ## Getting Started
@@ -91,13 +126,24 @@ src/
    cp .env.example .env
    ```
 
-   Fill in your `DATABASE_URL` with your Supabase connection string:
+   Fill in the required values:
 
-   ```
-   DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
-   ```
+   | Variable | Required | Description |
+   | -------- | -------- | ----------- |
+   | `DATABASE_URL` | Yes | Supabase Postgres connection string (Transaction pooler, port 6543) |
+   | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase anon/publishable key |
+   | `NEXT_PUBLIC_SITE_URL` | Yes | App URL (`http://localhost:3000` for dev) |
+   | `ENCRYPTION_KEY` | Yes | 32-byte hex key for AES-256-GCM encryption |
+   | `RESEND_API_KEY` | No | Resend API key for email budget alerts |
+   | `TRUELAYER_CLIENT_ID` | No | TrueLayer app credentials for open banking |
+   | `TRUELAYER_CLIENT_SECRET` | No | TrueLayer app credentials for open banking |
 
-   Find this in **Supabase Dashboard → Settings → Database → Connection string → URI** (use the Transaction pooler, port 6543).
+   Generate an encryption key:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
 
 4. **Create tables & seed the database**
 
@@ -107,7 +153,7 @@ src/
    psql $DATABASE_URL -f seed.sql
    ```
 
-   This creates all tables, enums, and inserts sample data.
+   This creates all tables, enums, and inserts default category templates.
 
 5. **Run the dev server**
 
@@ -119,24 +165,32 @@ src/
 
 ## Scripts
 
-| Command           | Description                        |
-| ----------------- | ---------------------------------- |
-| `npm run dev`     | Start the development server       |
-| `npm run build`   | Create a production build          |
-| `npm run start`   | Serve the production build         |
-| `npm run lint`    | Run ESLint                         |
+| Command           | Description                                |
+| ----------------- | ------------------------------------------ |
+| `npm run dev`     | Start the development server               |
+| `npm run build`   | Create a production build                  |
+| `npm run start`   | Serve the production build                 |
+| `npm run lint`    | Run ESLint                                 |
 
 ## Database Schema
 
-Seven core tables plus onboarding/template tables managed by Drizzle ORM:
+Managed by Drizzle ORM (`src/db/schema.ts`):
 
-- **accounts** — per-user financial accounts (current account, savings, creditCard, investment). Balance updated automatically on transaction changes.
-- **categories** — spending categories with color and icon
-- **transactions** — income/expense records linked to accounts and categories. Cascade-deleted when parent account is removed.
-- **budgets** — spending limits per category with monthly/weekly periods
-- **categorisation_rules** — pattern-based auto-categorisation rules
-- **default_category_templates** — database-backed default category definitions used during onboarding
-- **user_onboarding** — per-user onboarding state, base currency, and default-category preference
+| Table | Description |
+| ----- | ----------- |
+| `accounts` | Financial accounts (current, savings, credit card, investment) with encrypted names |
+| `transactions` | Income/expense records with encrypted descriptions, recurring patterns, and category/account links |
+| `categories` | User spending categories with colour and icon |
+| `budgets` | Spending limits per category (monthly/weekly) |
+| `goals` | Savings goals with target amount, deadline, and contributions |
+| `budget_alert_preferences` | Per-budget alert thresholds (browser + email) |
+| `budget_notifications` | Dispatched alert history |
+| `categorisation_rules` | Pattern-based auto-categorisation for transactions |
+| `truelayer_connections` | OAuth tokens (encrypted) for open banking |
+| `trading212_connections` | Encrypted API keys for Trading 212 |
+| `manual_holdings` | User-entered investment positions with cached Yahoo Finance prices |
+| `default_category_templates` | Built-in category templates for onboarding |
+| `user_onboarding` | Per-user onboarding state and base currency |
 
 ## License
 
