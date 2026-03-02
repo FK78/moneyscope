@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TransactionFormDialog } from "@/components/AddTransactionForm";
+import { TransferFormDialog } from "@/components/AddTransferForm";
 import { ImportCSVDialog } from "@/components/ImportCSVDialog";
 import {
   Table,
@@ -50,7 +51,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { ArrowDownLeft, ArrowUpDown, ArrowUpRight, CheckCircle2, Download, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
+import { ArrowDownLeft, ArrowRightLeft, ArrowUpDown, ArrowUpRight, CheckCircle2, Download, Receipt, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { deleteTransaction } from "@/db/mutations/transactions";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { TransactionsInsightsCharts } from "@/components/TransactionsInsightsCharts";
@@ -122,13 +123,14 @@ type Transaction = {
   id: number;
   accountName: string;
   account_id: number | null;
-  type: "income" | "expense" | null;
+  type: "income" | "expense" | "transfer" | null;
   amount: number;
   category: string | null;
   category_id: number | null;
   description: string;
   date: string | null;
   is_recurring: boolean;
+  transfer_account_id: number | null;
 };
 
 type Account = { id: number; accountName: string };
@@ -333,49 +335,69 @@ export function TransactionsClient({
           </Button>
         </div>
       ),
-      cell: ({ row }) => (
-        <span
-          className={`font-semibold tabular-nums ${row.original.type === "income"
+      cell: ({ row }) => {
+        const t = row.original;
+        const colorClass =
+          t.type === "income"
             ? "text-emerald-600"
-            : "text-red-600"
-            }`}
-        >
-          {row.original.type === "income" ? "+" : "−"}
-          {formatCurrency(row.original.amount, currency)}
-        </span>
-      ),
+            : t.type === "transfer"
+              ? "text-blue-600"
+              : "text-red-600";
+        const prefix =
+          t.type === "income" ? "+" : t.type === "transfer" ? "⇄ " : "−";
+        return (
+          <span className={`font-semibold tabular-nums ${colorClass}`}>
+            {prefix}
+            {formatCurrency(t.amount, currency)}
+          </span>
+        );
+      },
     },
     {
       id: "actions",
       enableSorting: false,
       enableGlobalFilter: false,
       header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          {row.original.is_recurring && (
-            <Badge variant="secondary" className="gap-1">
-              <RefreshCw className="h-3 w-3" />
-              Recurring
-            </Badge>
-          )}
-          <TransactionFormDialog
-            transaction={row.original}
-            accounts={accounts}
-            categories={categories}
-            onSaved={(ids) => {
-              const [editedId] = ids;
-              if (editedId !== undefined) {
-                handleTransactionEdited(editedId);
-              }
-            }}
-          />
-          <DeleteTransactionButton
-            transaction={row.original}
-            onDeleted={(desc) => setDeleteResult({ status: "success", description: desc })}
-            onDeleteFailed={() => setDeleteResult({ status: "error" })}
-          />
-        </div>
-      ),
+      cell: ({ row }) => {
+        const t = row.original;
+        const transferToName = t.type === "transfer" && t.transfer_account_id
+          ? accounts.find((a) => a.id === t.transfer_account_id)?.accountName
+          : null;
+        return (
+          <div className="flex items-center gap-2">
+            {t.type === "transfer" && (
+              <Badge variant="outline" className="gap-1 text-blue-600 border-blue-200">
+                <ArrowRightLeft className="h-3 w-3" />
+                {transferToName ? `→ ${transferToName}` : "Transfer"}
+              </Badge>
+            )}
+            {t.is_recurring && (
+              <Badge variant="secondary" className="gap-1">
+                <RefreshCw className="h-3 w-3" />
+                Recurring
+              </Badge>
+            )}
+            {t.type !== "transfer" && (
+              <TransactionFormDialog
+                transaction={t}
+                accounts={accounts}
+                categories={categories}
+                onSaved={(ids) => {
+                  const [editedId] = ids;
+                  if (editedId !== undefined) {
+                    handleTransactionEdited(editedId);
+                  }
+                }}
+              />
+            )}
+            <DeleteTransactionButton
+              transaction={t}
+              onDeleted={(desc) => setDeleteResult({ status: "success", description: desc })}
+              onDeleteFailed={() => setDeleteResult({ status: "error" })}
+            />
+          </div>
+        );
+      },
     },
   ]), [accounts, categories, currency, handleTransactionEdited]);
 
@@ -412,6 +434,12 @@ export function TransactionsClient({
               accounts={accounts}
               onImported={() => router.refresh()}
             />
+            {accounts.length >= 2 && (
+              <TransferFormDialog
+                accounts={accounts}
+                onSaved={(id) => handleTransactionsAdded([id])}
+              />
+            )}
             <TransactionFormDialog
               accounts={accounts}
               categories={categories}

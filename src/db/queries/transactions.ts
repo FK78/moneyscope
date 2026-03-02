@@ -23,6 +23,7 @@ const transactionSelect = {
   description: transactionsTable.description,
   date: transactionsTable.date,
   is_recurring: transactionsTable.is_recurring,
+  transfer_account_id: transactionsTable.transfer_account_id,
 };
 
 function baseTransactionsQuery(userId: string) {
@@ -37,12 +38,13 @@ function baseTransactionsQuery(userId: string) {
 export type ExportTransaction = {
   id: number;
   date: string | null;
-  type: 'income' | 'expense' | null;
+  type: 'income' | 'expense' | 'transfer' | null;
   amount: number;
   description: string;
   accountName: string;
   category: string | null;
   isRecurring: boolean;
+  transferAccountId: number | null;
 };
 
 export async function getTransactionsForExport(
@@ -60,6 +62,7 @@ export async function getTransactionsForExport(
       accountName: accountsTable.name,
       category: categoriesTable.name,
       isRecurring: transactionsTable.is_recurring,
+      transferAccountId: transactionsTable.transfer_account_id,
     })
     .from(transactionsTable)
     .innerJoin(accountsTable, eq(transactionsTable.account_id, accountsTable.id))

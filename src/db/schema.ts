@@ -2,7 +2,7 @@ import { boolean, date, integer, pgEnum, pgTable, real, timestamp, varchar, uuid
 
 export const accountTypeEnum = pgEnum("account_type", ["currentAccount", "savings", "creditCard", "investment"]);
 export const periodEnum = pgEnum("period", ["monthly", "weekly"]);
-export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense"]);
+export const transactionTypeEnum = pgEnum("transaction_type", ["income", "expense", "transfer"]);
 export const recurringPatternEnum = pgEnum("recurring_pattern", ["daily", "weekly", "biweekly", "monthly", "yearly"]);
 
 export const defaultCategoryTemplatesTable = pgTable("default_category_templates", {
@@ -63,6 +63,7 @@ export const transactionsTable = pgTable("transactions", {
   recurring_pattern: recurringPatternEnum("recurring_pattern"),
   next_recurring_date: date("next_recurring_date"),
   created_at: date().defaultNow(),
+  transfer_account_id: integer("transfer_account_id").references(() => accountsTable.id),
   truelayer_id: varchar("truelayer_id", { length: 255 }),
 });
 

@@ -33,7 +33,8 @@ export async function createTransaction(transaction: Transaction) {
   }).returning({ id: transactionsTable.id });
 }
 
-function balanceDelta(type: 'income' | 'expense', amount: number) {
+function balanceDelta(type: 'income' | 'expense' | 'transfer', amount: number) {
+  if (type === 'transfer') return 0;
   return type === 'income' ? amount : -amount;
 }
 
@@ -138,17 +139,71 @@ export async function editTransaction(formData: FormData) {
   return result;
 }
 
+export async function addTransfer(formData: FormData) {
+  const amount = parseFloat(formData.get('amount') as string);
+  const fromAccountId = Number(formData.get('from_account_id'));
+  const toAccountId = Number(formData.get('to_account_id'));
+  const description = formData.get('description') as string || 'Transfer';
+  const txnDate = formData.get('date') as string;
+
+  if (fromAccountId === toAccountId) {
+    throw new Error('Source and destination accounts must be different');
+  }
+
+  const [result] = await createTransaction({
+    type: 'transfer',
+    amount,
+    description,
+    is_recurring: false,
+    date: txnDate,
+    account_id: fromAccountId,
+    transfer_account_id: toAccountId,
+    category_id: null,
+    recurring_pattern: null,
+    next_recurring_date: null,
+  });
+
+  // Deduct from source account
+  await db.update(accountsTable)
+    .set({ balance: sql`${accountsTable.balance} - ${amount}` })
+    .where(eq(accountsTable.id, fromAccountId));
+
+  // Add to destination account
+  await db.update(accountsTable)
+    .set({ balance: sql`${accountsTable.balance} + ${amount}` })
+    .where(eq(accountsTable.id, toAccountId));
+
+  revalidatePath('/dashboard/transactions');
+  revalidatePath('/dashboard/accounts');
+  revalidatePath('/dashboard');
+
+  return result;
+}
+
 export async function deleteTransaction(id: number) {
   // Fetch transaction to reverse its balance effect
   const [txn] = await db.select({
     type: transactionsTable.type,
     amount: transactionsTable.amount,
     account_id: transactionsTable.account_id,
+    transfer_account_id: transactionsTable.transfer_account_id,
   }).from(transactionsTable).where(eq(transactionsTable.id, id));
 
   await db.delete(transactionsTable).where(eq(transactionsTable.id, id));
 
-  if (txn?.account_id) {
+  if (txn?.type === 'transfer') {
+    // Reverse transfer: add back to source, deduct from destination
+    if (txn.account_id) {
+      await db.update(accountsTable)
+        .set({ balance: sql`${accountsTable.balance} + ${txn.amount}` })
+        .where(eq(accountsTable.id, txn.account_id));
+    }
+    if (txn.transfer_account_id) {
+      await db.update(accountsTable)
+        .set({ balance: sql`${accountsTable.balance} - ${txn.amount}` })
+        .where(eq(accountsTable.id, txn.transfer_account_id));
+    }
+  } else if (txn?.account_id) {
     await db.update(accountsTable)
       .set({ balance: sql`${accountsTable.balance} - ${balanceDelta(txn.type, txn.amount)}` })
       .where(eq(accountsTable.id, txn.account_id));

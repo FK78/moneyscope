@@ -27,13 +27,14 @@ type Transaction = {
   id: number;
   accountName: string;
   account_id: number | null;
-  type: "income" | "expense" | null;
+  type: "income" | "expense" | "transfer" | null;
   amount: number;
   category: string | null;
   category_id: number | null;
   description: string;
   date: string | null;
   is_recurring: boolean;
+  transfer_account_id?: number | null;
 };
 
 type Account = { id: number; accountName: string };

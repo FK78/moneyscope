@@ -30,6 +30,7 @@ function buildCsv(rows: ExportTransaction[]) {
     "Account",
     "Category",
     "Recurring",
+    "Transfer To Account ID",
   ];
 
   const lines = [header.map(escapeCsvValue).join(",")];
@@ -44,6 +45,7 @@ function buildCsv(rows: ExportTransaction[]) {
       row.accountName,
       row.category,
       row.isRecurring,
+      row.transferAccountId,
     ].map(escapeCsvValue).join(","));
   }
 
