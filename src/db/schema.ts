@@ -91,6 +91,27 @@ export const budgetAlertPreferencesTable = pgTable("budget_alert_preferences", {
     email_alerts: boolean("email_alerts").notNull().default(false),
 })
 
+export const trading212ConnectionsTable = pgTable("trading212_connections", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  user_id: uuid("user_id").notNull().unique(),
+  api_key_encrypted: text("api_key_encrypted").notNull(),
+  environment: varchar({ length: 10 }).notNull().default("live"),
+  connected_at: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const manualHoldingsTable = pgTable("manual_holdings", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  user_id: uuid("user_id").notNull(),
+  ticker: varchar({ length: 20 }).notNull(),
+  name: varchar({ length: 255 }).notNull(),
+  quantity: real().notNull(),
+  average_price: real("average_price").notNull(),
+  current_price: real("current_price"),
+  currency: varchar({ length: 3 }).notNull().default("GBP"),
+  last_price_update: timestamp("last_price_update", { withTimezone: true }),
+  created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const alertTypeEnum = pgEnum("alert_type", ["threshold_warning", "over_budget"]);
 
 export const budgetNotificationsTable = pgTable("budget_notifications", {
