@@ -16,10 +16,12 @@ import {
 import { getAccountsWithDetails } from "@/db/queries/accounts";
 import { AccountFormDialog } from "@/components/AddAccountForm";
 import { DeleteAccountButton } from "@/components/DeleteAccountButton";
+import { ConnectBankButton } from "@/components/ConnectBankButton";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { getCurrentUserId } from "@/lib/auth";
 import { getUserBaseCurrency } from "@/db/queries/onboarding";
 import { AccountCharts } from "@/components/AccountCharts";
+import { getTrueLayerConnections } from "@/db/mutations/truelayer";
 
 const typeConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   currentAccount: { label: "Current Account", variant: "secondary" },
@@ -38,9 +40,10 @@ export const typeIcons: Record<string, typeof Wallet> = {
 export default async function Accounts() {
   const userId = await getCurrentUserId();
 
-  const [accounts, baseCurrency] = await Promise.all([
+  const [accounts, baseCurrency, truelayerConnections] = await Promise.all([
     getAccountsWithDetails(userId),
     getUserBaseCurrency(userId),
+    getTrueLayerConnections(),
   ]);
 
   const liabilityTypes = new Set(["creditCard"]);
@@ -62,7 +65,10 @@ export default async function Accounts() {
             Manage and monitor all your linked accounts.
           </p>
         </div>
-        <AccountFormDialog />
+        <div className="flex gap-2">
+          <ConnectBankButton connections={truelayerConnections} />
+          <AccountFormDialog />
+        </div>
       </div>
 
       {/* Summary row */}

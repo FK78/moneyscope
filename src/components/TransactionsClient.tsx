@@ -124,7 +124,7 @@ type Transaction = {
   account_id: number | null;
   type: "income" | "expense" | null;
   amount: number;
-  category: string;
+  category: string | null;
   category_id: number | null;
   description: string;
   date: string | null;

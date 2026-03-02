@@ -22,6 +22,16 @@ export const userOnboardingTable = pgTable("user_onboarding", {
   completed_at: timestamp("completed_at", { withTimezone: true }),
 });
 
+export const truelayerConnectionsTable = pgTable("truelayer_connections", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  user_id: uuid("user_id").notNull(),
+  access_token: text("access_token").notNull(),
+  refresh_token: text("refresh_token").notNull(),
+  token_expires_at: timestamp("token_expires_at", { withTimezone: true }).notNull(),
+  provider_name: varchar("provider_name", { length: 255 }),
+  connected_at: timestamp("connected_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const accountsTable = pgTable("accounts", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   user_id: uuid("user_id").notNull(),
@@ -29,6 +39,8 @@ export const accountsTable = pgTable("accounts", {
   type: accountTypeEnum(),
   balance: real().notNull(),
   currency: varchar({ length: 3 }).notNull(),
+  truelayer_id: varchar("truelayer_id", { length: 255 }),
+  truelayer_connection_id: integer("truelayer_connection_id").references(() => truelayerConnectionsTable.id),
 });
 
 export const categoriesTable = pgTable("categories", {
@@ -51,6 +63,7 @@ export const transactionsTable = pgTable("transactions", {
   recurring_pattern: recurringPatternEnum("recurring_pattern"),
   next_recurring_date: date("next_recurring_date"),
   created_at: date().defaultNow(),
+  truelayer_id: varchar("truelayer_id", { length: 255 }),
 });
 
 export const budgetsTable = pgTable("budgets", {
