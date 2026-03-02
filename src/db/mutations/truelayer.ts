@@ -10,6 +10,7 @@ import {
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth";
+import { encrypt, decrypt } from "@/lib/encryption";
 import {
   TrueLayerTokens,
   refreshAccessToken,
@@ -34,8 +35,8 @@ export async function saveTrueLayerConnection(
     .insert(truelayerConnectionsTable)
     .values({
       user_id: userId,
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
+      access_token: encrypt(tokens.access_token),
+      refresh_token: encrypt(tokens.refresh_token),
       token_expires_at: expiresAt,
     })
     .returning({ id: truelayerConnectionsTable.id });
@@ -56,18 +57,18 @@ async function getValidToken(connectionId: number): Promise<string> {
   if (!conn) throw new Error("TrueLayer connection not found");
 
   if (conn.token_expires_at > new Date()) {
-    return conn.access_token;
+    return decrypt(conn.access_token);
   }
 
   // Refresh the token
-  const tokens = await refreshAccessToken(conn.refresh_token);
+  const tokens = await refreshAccessToken(decrypt(conn.refresh_token));
   const newExpiry = new Date(Date.now() + tokens.expires_in * 1000);
 
   await db
     .update(truelayerConnectionsTable)
     .set({
-      access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
+      access_token: encrypt(tokens.access_token),
+      refresh_token: encrypt(tokens.refresh_token),
       token_expires_at: newExpiry,
     })
     .where(eq(truelayerConnectionsTable.id, connectionId));
@@ -157,9 +158,10 @@ export async function importFromTrueLayer() {
           .insert(accountsTable)
           .values({
             user_id: userId,
-            name:
+            name: encrypt(
               tlAccount.display_name ||
-              `${tlAccount.provider?.display_name ?? "Bank"} Account`,
+              `${tlAccount.provider?.display_name ?? "Bank"} Account`
+            ),
             type: mapAccountType(tlAccount.account_type),
             balance,
             currency: tlAccount.currency || baseCurrency,
@@ -237,7 +239,7 @@ export async function importFromTrueLayer() {
           category_id: categoryId,
           type,
           amount,
-          description,
+          description: encrypt(description),
           date: tlTxn.timestamp ? tlTxn.timestamp.split("T")[0] : to,
           is_recurring: false,
           truelayer_id: tlTxn.transaction_id,

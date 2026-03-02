@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { getCurrentUserId } from '@/lib/auth';
 import { getUserBaseCurrency } from '@/db/queries/onboarding';
+import { encrypt } from '@/lib/encryption';
 
 export async function addAccount(formData: FormData) {
   const userId = await getCurrentUserId();
@@ -13,7 +14,7 @@ export async function addAccount(formData: FormData) {
 
   const [result] = await db.insert(accountsTable).values({
     user_id: userId,
-    name: formData.get('name') as string,
+    name: encrypt(formData.get('name') as string),
     type: formData.get('type') as 'currentAccount' | 'savings' | 'creditCard' | 'investment',
     balance: parseFloat(formData.get('balance') as string),
     currency: baseCurrency,
@@ -29,7 +30,7 @@ export async function editAccount(id: number, formData: FormData) {
   const baseCurrency = await getUserBaseCurrency(userId);
 
   await db.update(accountsTable).set({
-    name: formData.get('name') as string,
+    name: encrypt(formData.get('name') as string),
     type: formData.get('type') as 'currentAccount' | 'savings' | 'creditCard' | 'investment',
     balance: parseFloat(formData.get('balance') as string),
     currency: baseCurrency,

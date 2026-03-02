@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { eq, sql } from 'drizzle-orm';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBudgetAlerts } from '@/lib/budget-alerts';
+import { encrypt } from '@/lib/encryption';
 import { matchCategorisationRule } from '@/lib/auto-categorise';
 
 type Transaction = typeof transactionsTable.$inferInsert;
@@ -26,7 +27,10 @@ function computeNextRecurringDate(dateStr: string, pattern: string | null): stri
 }
 
 export async function createTransaction(transaction: Transaction) {
-  return await db.insert(transactionsTable).values(transaction).returning({ id: transactionsTable.id });
+  return await db.insert(transactionsTable).values({
+    ...transaction,
+    description: transaction.description ? encrypt(transaction.description) : transaction.description,
+  }).returning({ id: transactionsTable.id });
 }
 
 function balanceDelta(type: 'income' | 'expense', amount: number) {
@@ -103,7 +107,7 @@ export async function editTransaction(formData: FormData) {
   const [result] = await db.update(transactionsTable).set({
     type: newType,
     amount: newAmount,
-    description: formData.get('description') as string,
+    description: encrypt(formData.get('description') as string),
     is_recurring: isRecurring,
     date: txnDate,
     account_id: newAccountId,
