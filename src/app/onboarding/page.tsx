@@ -91,7 +91,7 @@ export default async function OnboardingPage({
     <div className="mx-auto max-w-4xl space-y-6 p-6 md:p-10">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Set up your workspace</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Set up your workspace</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Add accounts, categories, and budgets. Every step is optional.
           </p>

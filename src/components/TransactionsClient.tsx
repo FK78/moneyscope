@@ -423,7 +423,7 @@ export function TransactionsClient({
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Transactions</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Review and manage your recent financial activity.
           </p>

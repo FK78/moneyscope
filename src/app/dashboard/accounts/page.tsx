@@ -60,7 +60,7 @@ export default async function Accounts() {
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Accounts</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Accounts</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Manage and monitor all your linked accounts.
           </p>
@@ -75,10 +75,12 @@ export default async function Accounts() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Net Worth
             </CardDescription>
-            <DollarSign className="text-muted-foreground h-4 w-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
+              <DollarSign className="text-muted-foreground h-4 w-4" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className={`text-2xl ${totalBalance < 0 ? "text-red-600" : ""}`}>
@@ -91,10 +93,12 @@ export default async function Accounts() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Total Assets
             </CardDescription>
-            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className={`text-2xl ${totalAssets < 0 ? "text-red-600" : "text-emerald-600"}`}>
@@ -104,10 +108,12 @@ export default async function Accounts() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Total Liabilities
             </CardDescription>
-            <CreditCard className="h-4 w-4 text-red-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
+              <CreditCard className="h-4 w-4 text-red-500" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className="text-2xl text-red-600">
@@ -144,8 +150,8 @@ export default async function Accounts() {
               <Card key={account.id}>
                 <CardHeader className="flex flex-row items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                      {(() => { const Icon = typeIcons[account.type ?? ""] ?? Wallet; return <Icon className="text-muted-foreground h-5 w-5" />; })()}
+                    <div className="bg-primary/8 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+                      {(() => { const Icon = typeIcons[account.type ?? ""] ?? Wallet; return <Icon className="text-primary h-5 w-5" />; })()}
                     </div>
                     <div>
                       <CardTitle className="text-base">{account.accountName}</CardTitle>
@@ -170,9 +176,9 @@ export default async function Accounts() {
                   </p>
                   {/* Balance bar relative to total assets */}
                   <div className="mt-3">
-                    <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+                    <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
                       <div
-                        className={`h-full rounded-full ${account.balance >= 0 ? "bg-emerald-500" : "bg-red-500"
+                        className={`h-full rounded-full transition-all ${account.balance >= 0 ? "bg-emerald-400" : "bg-red-400"
                           }`}
                         style={{
                           width: `${totalAbsolute > 0 ? Math.min(

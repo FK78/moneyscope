@@ -41,7 +41,7 @@ export default async function GoalsPage() {
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Savings Goals</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Savings Goals</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Set targets and track your progress towards financial goals.
           </p>
@@ -51,11 +51,11 @@ export default async function GoalsPage() {
 
       {/* Overview card */}
       {goals.length > 0 && (
-        <Card className="bg-gradient-to-r from-primary/5 to-emerald-500/5 border-primary/20">
+        <Card className="bg-gradient-to-br from-primary/6 via-amber-500/4 to-rose-400/6 border-primary/15">
           <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Trophy className="h-6 w-6 text-primary" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <Trophy className="h-7 w-7 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Overall Progress</p>
@@ -75,7 +75,7 @@ export default async function GoalsPage() {
                 </div>
                 <div className="bg-muted h-2.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-primary h-full rounded-full transition-all"
+                    className="bg-gradient-to-r from-primary to-amber-400 h-full rounded-full transition-all"
                     style={{ width: `${Math.min(overallPct, 100)}%` }}
                   />
                 </div>
@@ -122,7 +122,7 @@ export default async function GoalsPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
                       <div
-                        className="flex h-8 w-8 items-center justify-center rounded-lg"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl"
                         style={{ backgroundColor: `${goal.color}20` }}
                       >
                         <Trophy className="h-4 w-4" style={{ color: goal.color }} />
@@ -158,7 +158,7 @@ export default async function GoalsPage() {
                     </div>
                     <div className="bg-muted h-3 rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all ${isComplete ? "bg-emerald-500" : ""}`}
+                        className={`h-full rounded-full transition-all ${isComplete ? "bg-emerald-400" : ""}`}
                         style={{
                           width: `${pct}%`,
                           backgroundColor: isComplete ? undefined : goal.color,
@@ -178,7 +178,7 @@ export default async function GoalsPage() {
                   )}
 
                   {isComplete && (
-                    <div className="flex items-center gap-2 rounded-md bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600">
+                    <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-600">
                       <Trophy className="h-4 w-4" />
                       Goal reached!
                     </div>

@@ -43,10 +43,10 @@ function isActive(href: string, pathname: string) {
 }
 
 const linkClass = (active: boolean) =>
-  `flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+  `flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-semibold transition-all duration-200 ${
     active
-      ? "bg-secondary text-foreground"
-      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+      ? "bg-primary/10 text-primary"
+      : "text-muted-foreground hover:bg-muted hover:text-foreground"
   }`;
 
 export function DashboardNav() {

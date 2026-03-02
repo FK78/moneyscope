@@ -47,7 +47,7 @@ export default async function Budgets() {
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Budgets</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Budgets</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Track your spending against monthly budgets.
           </p>
@@ -65,10 +65,12 @@ export default async function Budgets() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Total Budget
             </CardDescription>
-            <Target className="text-muted-foreground h-4 w-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
+              <Target className="text-muted-foreground h-4 w-4" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className="text-2xl">
@@ -78,10 +80,12 @@ export default async function Budgets() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Spent
             </CardDescription>
-            <TrendingUp className="h-4 w-4 text-orange-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 dark:bg-orange-900/30">
+              <TrendingUp className="h-4 w-4 text-orange-500" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className="text-2xl text-orange-600">
@@ -94,10 +98,12 @@ export default async function Budgets() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Remaining
             </CardDescription>
-            <CheckCircle className="h-4 w-4 text-emerald-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+              <CheckCircle className="h-4 w-4 text-emerald-500" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className="text-2xl text-emerald-600">
@@ -107,10 +113,12 @@ export default async function Budgets() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Over Budget
             </CardDescription>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className="text-2xl">
@@ -167,14 +175,14 @@ export default async function Budgets() {
                     <div className="flex items-center gap-2.5 min-w-0">
                       {Icon ? (
                         <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
                           style={{ backgroundColor: budget.budgetColor + "15" }}
                         >
-                          <Icon className="h-4 w-4" style={{ color: budget.budgetColor }} />
+                          <Icon className="h-4.5 w-4.5" style={{ color: budget.budgetColor }} />
                         </div>
                       ) : (
                         <div
-                          className="h-9 w-9 shrink-0 rounded-lg"
+                          className="h-10 w-10 shrink-0 rounded-xl"
                           style={{ backgroundColor: budget.budgetColor + "15" }}
                         />
                       )}
@@ -219,14 +227,14 @@ export default async function Budgets() {
 
                   {/* Progress bar */}
                   <div>
-                    <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+                    <div className="bg-muted h-2.5 w-full overflow-hidden rounded-full">
                       <div
                         className={`h-full rounded-full transition-all ${
                           isOver
-                            ? "bg-red-500"
+                            ? "bg-red-400"
                             : isNear
-                              ? "bg-orange-500"
-                              : "bg-emerald-500"
+                              ? "bg-amber-400"
+                              : "bg-emerald-400"
                         }`}
                         style={{ width: `${percent}%` }}
                       />

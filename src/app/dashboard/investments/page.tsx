@@ -156,7 +156,7 @@ export default async function InvestmentsPage() {
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Investments</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Investments</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Track your portfolio across Trading 212 and manual holdings.
           </p>
@@ -185,10 +185,12 @@ export default async function InvestmentsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Total Value
             </CardDescription>
-            <DollarSign className="text-muted-foreground h-4 w-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
+              <DollarSign className="text-muted-foreground h-4 w-4" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className="text-2xl">
@@ -202,14 +204,16 @@ export default async function InvestmentsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Total Gain / Loss
             </CardDescription>
-            {totalGainLoss >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-500" />
-            )}
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
+              {totalGainLoss >= 0 ? (
+                <TrendingUp className="h-4 w-4 text-emerald-500" />
+              ) : (
+                <TrendingDown className="h-4 w-4 text-red-500" />
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle
@@ -226,10 +230,12 @@ export default async function InvestmentsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardDescription className="text-sm font-medium">
+            <CardDescription className="text-sm font-semibold">
               Total Invested
             </CardDescription>
-            <BarChart3 className="text-muted-foreground h-4 w-4" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted">
+              <BarChart3 className="text-muted-foreground h-4 w-4" />
+            </div>
           </CardHeader>
           <CardContent>
             <CardTitle className="text-2xl">

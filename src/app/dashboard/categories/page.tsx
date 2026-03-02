@@ -44,7 +44,7 @@ export default async function Categories() {
     <div className="mx-auto max-w-7xl space-y-8 p-6 md:p-10">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Categories</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Manage your spending categories.
           </p>
@@ -84,18 +84,18 @@ export default async function Categories() {
                 return (
                 <div
                   key={cat.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
+                  className="flex items-center gap-3 rounded-xl border border-border/60 p-3 transition-all duration-200 hover:shadow-sm"
                 >
                   {Icon ? (
                     <div
-                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                      style={{ backgroundColor: cat.color + "20" }}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: cat.color + "18" }}
                     >
-                      <Icon className="h-3.5 w-3.5" style={{ color: cat.color }} />
+                      <Icon className="h-4 w-4" style={{ color: cat.color }} />
                     </div>
                   ) : (
                     <div
-                      className="h-3 w-3 shrink-0 rounded-full"
+                      className="h-3.5 w-3.5 shrink-0 rounded-full"
                       style={{ backgroundColor: cat.color }}
                     />
                   )}
@@ -146,11 +146,11 @@ export default async function Categories() {
               {rules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
+                  className="flex items-center gap-3 rounded-xl border border-border/60 p-3 transition-all duration-200 hover:shadow-sm"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-medium">
+                      <code className="rounded-lg bg-muted px-2 py-0.5 text-xs font-medium">
                         {rule.pattern}
                       </code>
                       <span className="text-xs text-muted-foreground">→</span>

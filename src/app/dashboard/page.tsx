@@ -139,12 +139,14 @@ export default async function Home() {
       {/* Header with greeting and quick actions */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <h1 className="text-3xl font-extrabold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1.5 text-sm">
             Welcome back,{" "}
-            {user?.user_metadata?.display_name ||
-              user?.user_metadata?.full_name ||
-              user?.email}
+            <span className="font-semibold text-foreground">
+              {user?.user_metadata?.display_name ||
+                user?.user_metadata?.full_name ||
+                user?.email}
+            </span>
             . Here&apos;s your overview for {monthName}.
           </p>
         </div>
@@ -164,11 +166,11 @@ export default async function Home() {
 
       {/* Net Worth banner */}
       {accounts.length > 0 && (
-        <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
+        <Card className="bg-gradient-to-br from-primary/6 via-amber-500/4 to-rose-400/6 border-primary/15">
           <CardContent className="flex flex-col gap-4 py-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Landmark className="h-6 w-6 text-primary" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <Landmark className="h-7 w-7 text-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -222,14 +224,14 @@ export default async function Home() {
       {/* Month progress + Summary cards */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>Month progress</span>
+          <span className="font-medium">Month progress</span>
           <span>
             Day {dayOfMonth} of {daysInMonth} ({monthProgress}%)
           </span>
         </div>
-        <div className="bg-muted h-1.5 rounded-full overflow-hidden">
+        <div className="bg-muted h-2 rounded-full overflow-hidden">
           <div
-            className="bg-primary h-full rounded-full transition-all"
+            className="bg-gradient-to-r from-primary to-amber-400 h-full rounded-full transition-all"
             style={{ width: `${monthProgress}%` }}
           />
         </div>
@@ -315,14 +317,14 @@ export default async function Home() {
                         {formatCurrency(budget.budgetAmount, baseCurrency)}
                       </span>
                     </div>
-                    <div className="bg-muted h-2 rounded-full overflow-hidden">
+                    <div className="bg-muted h-2.5 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
                           isOver
-                            ? "bg-red-500"
+                            ? "bg-red-400"
                             : isWarning
-                            ? "bg-amber-500"
-                            : "bg-emerald-500"
+                            ? "bg-amber-400"
+                            : "bg-emerald-400"
                         }`}
                         style={{ width: `${pct}%` }}
                       />
@@ -332,7 +334,7 @@ export default async function Home() {
               })
             )}
             {budgetsAtRisk.length > 0 && (
-              <p className="text-xs text-amber-600 pt-1">
+              <p className="text-xs text-amber-600 pt-1 font-medium">
                 {budgetsAtRisk.length} budget
                 {budgetsAtRisk.length > 1 ? "s" : ""} at or over 80% spent
               </p>
@@ -408,9 +410,9 @@ export default async function Home() {
                       {isComplete ? "Complete!" : `${formatCurrency(goal.saved_amount, baseCurrency)} / ${formatCurrency(goal.target_amount, baseCurrency)}`}
                     </span>
                   </div>
-                  <div className="bg-muted h-2 rounded-full overflow-hidden">
+                  <div className="bg-muted h-2.5 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${isComplete ? "bg-emerald-500" : ""}`}
+                      className={`h-full rounded-full transition-all ${isComplete ? "bg-emerald-400" : ""}`}
                       style={{ width: `${pct}%`, backgroundColor: isComplete ? undefined : goal.color }}
                     />
                   </div>

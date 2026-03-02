@@ -26,20 +26,20 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen">
-      <nav className="border-border sticky top-0 z-50 border-b bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 px-6 md:px-10">
+    <div className="min-h-screen bg-background">
+      <nav className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-lg">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-6 md:px-10">
           <div className="flex items-center gap-6">
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 text-lg font-bold tracking-tight"
+              className="flex items-center gap-2.5 text-lg font-bold tracking-tight"
             >
-              <Image src="/logo.svg" alt="Flowdget logo" width={28} height={28} className="rounded" />
+              <Image src="/logo.svg" alt="Flowdget logo" width={30} height={30} />
               Flowdget
             </Link>
             <DashboardNav />
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <ThemeToggle />
             <Suspense>
               <NotificationBellServer />

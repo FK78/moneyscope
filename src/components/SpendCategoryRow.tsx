@@ -18,9 +18,9 @@ export function SpendCategoryRow({ category, total, color, totalExpenses, curren
           {formatCurrency(amount, currency)}
         </span>
       </div>
-      <div className="bg-muted h-2 rounded-full overflow-hidden">
+      <div className="bg-muted h-2.5 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full"
+          className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, backgroundColor: color }}
         />
       </div>
