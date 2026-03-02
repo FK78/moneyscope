@@ -2,6 +2,15 @@ import { db } from '@/index';
 import { transactionsTable, categoriesTable, accountsTable } from '@/db/schema';
 import { and, desc, eq, ne, sql, sum, gte, lte, lt } from 'drizzle-orm';
 import { getMonthRange, getRecentMonthKeys, getRecentDayKeys, getTomorrowString, getNextMonthFirstString } from '@/lib/date';
+import { decrypt } from '@/lib/encryption';
+
+function decryptTransactionRows<T extends { description?: string | null; accountName?: string | null }>(rows: T[]): T[] {
+  return rows.map(row => ({
+    ...row,
+    ...(row.description != null && { description: decrypt(row.description) }),
+    ...(row.accountName != null && { accountName: decrypt(row.accountName) }),
+  }));
+}
 
 const transactionSelect = {
   id: transactionsTable.id,
@@ -41,7 +50,7 @@ export async function getTransactionsForExport(
   startDate: string,
   endDate: string,
 ): Promise<ExportTransaction[]> {
-  return await db
+  const rows = await db
     .select({
       id: transactionsTable.id,
       date: transactionsTable.date,
@@ -63,6 +72,7 @@ export async function getTransactionsForExport(
       ),
     )
     .orderBy(desc(transactionsTable.date), desc(transactionsTable.id));
+  return decryptTransactionRows(rows);
 }
 
 export async function getTransactionsCount(userId: string, startDate?: string, endDate?: string) {
@@ -96,10 +106,11 @@ export async function getTransactionsWithDetailsPaginated(
   if (startDate) query = query.where(gte(transactionsTable.date, startDate));
   if (endDate) query = query.where(lte(transactionsTable.date, endDate));
 
-  return await query
+  const rows = await query
     .orderBy(desc(transactionsTable.date), desc(transactionsTable.id))
     .limit(safePageSize)
     .offset(offset);
+  return decryptTransactionRows(rows);
 }
 
 export async function getTotalsByType(
@@ -125,9 +136,10 @@ export async function getTotalsByType(
 }
 
 export async function getLatestFiveTransactionsWithDetails(userId: string) {
-  return await baseTransactionsQuery(userId)
+  const rows = await baseTransactionsQuery(userId)
     .orderBy(desc(transactionsTable.date))
     .limit(5);
+  return decryptTransactionRows(rows);
 }
 
 export async function getSavingsDepositTotal(userId: string, startDate: string, endDate: string): Promise<number> {

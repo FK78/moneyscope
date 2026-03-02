@@ -24,10 +24,7 @@ import {
 import { getAccountsWithDetails } from "@/db/queries/accounts";
 import { getBudgets } from "@/db/queries/budgets";
 import { getGoals } from "@/db/queries/goals";
-import { getTrading212Connection, getManualHoldings } from "@/db/queries/investments";
-import { getT212AccountSummary } from "@/lib/trading212";
-import { decrypt } from "@/lib/encryption";
-import { getQuotes } from "@/lib/yahoo-finance";
+import { getInvestmentValue } from "@/lib/investment-value";
 import { getMonthRange } from "@/lib/date";
 import { getSummaryCards } from "@/lib/summaryCards";
 import { generateInsights } from "@/lib/insights";
@@ -70,8 +67,7 @@ export default async function Home() {
     monthlyTrend,
     categoryTrend,
     baseCurrency,
-    t212Connection,
-    manualHoldings,
+    investmentValue,
   ] = await Promise.all([
     getLatestFiveTransactionsWithDetails(userId),
     getAccountsWithDetails(userId),
@@ -86,8 +82,7 @@ export default async function Home() {
     getMonthlyIncomeExpenseTrend(userId, 6),
     getMonthlyCategorySpendTrend(userId, 4),
     getUserBaseCurrency(userId),
-    getTrading212Connection(userId),
-    getManualHoldings(userId),
+    getInvestmentValue(userId),
   ]);
 
   const savingsBalance = accounts
@@ -104,24 +99,6 @@ export default async function Home() {
       (sum: number, a: { balance: number }) => sum + Math.abs(a.balance),
       0
     );
-  // Investments value for net worth
-  let investmentValue = 0;
-  if (t212Connection) {
-    try {
-      const apiKey = decrypt(t212Connection.api_key_encrypted);
-      const summary = await getT212AccountSummary(apiKey, t212Connection.environment);
-      investmentValue += summary.totalValue;
-    } catch { /* T212 fetch failed — skip */ }
-  }
-  if (manualHoldings.length > 0) {
-    const tickers = manualHoldings.map((h) => h.ticker);
-    const quotes = await getQuotes(tickers);
-    for (const h of manualHoldings) {
-      const price = quotes.get(h.ticker)?.currentPrice ?? h.current_price ?? h.average_price;
-      investmentValue += price * h.quantity;
-    }
-  }
-
   const netWorth = totalAssets - totalLiabilities + investmentValue;
 
   const summaryCards = getSummaryCards(

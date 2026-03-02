@@ -6,12 +6,11 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth";
 import { encrypt } from "@/lib/encryption";
-import { getQuote, searchTicker } from "@/lib/yahoo-finance";
+import { getQuote } from "@/lib/yahoo-finance";
 
-export async function searchTickers(query: string) {
-  await getCurrentUserId();
-  if (!query || query.length < 1) return [];
-  return searchTicker(query);
+function revalidateInvestments() {
+  revalidatePath("/dashboard/investments");
+  revalidatePath("/dashboard");
 }
 
 export async function connectTrading212(formData: FormData) {
@@ -39,8 +38,7 @@ export async function connectTrading212(formData: FormData) {
       },
     });
 
-  revalidatePath("/dashboard/investments");
-  revalidatePath("/dashboard");
+  revalidateInvestments();
 }
 
 export async function disconnectTrading212() {
@@ -48,8 +46,7 @@ export async function disconnectTrading212() {
   await db
     .delete(trading212ConnectionsTable)
     .where(eq(trading212ConnectionsTable.user_id, userId));
-  revalidatePath("/dashboard/investments");
-  revalidatePath("/dashboard");
+  revalidateInvestments();
 }
 
 export async function addManualHolding(formData: FormData) {
@@ -77,8 +74,7 @@ export async function addManualHolding(formData: FormData) {
     last_price_update: quote ? new Date() : null,
   });
 
-  revalidatePath("/dashboard/investments");
-  revalidatePath("/dashboard");
+  revalidateInvestments();
 }
 
 export async function editManualHolding(id: number, formData: FormData) {
@@ -98,8 +94,7 @@ export async function editManualHolding(id: number, formData: FormData) {
       ),
     );
 
-  revalidatePath("/dashboard/investments");
-  revalidatePath("/dashboard");
+  revalidateInvestments();
 }
 
 export async function deleteManualHolding(id: number) {
@@ -112,8 +107,7 @@ export async function deleteManualHolding(id: number) {
         eq(manualHoldingsTable.user_id, userId),
       ),
     );
-  revalidatePath("/dashboard/investments");
-  revalidatePath("/dashboard");
+  revalidateInvestments();
 }
 
 export async function refreshManualHoldingPrices() {
@@ -137,6 +131,5 @@ export async function refreshManualHoldingPrices() {
   });
 
   await Promise.all(updates);
-  revalidatePath("/dashboard/investments");
-  revalidatePath("/dashboard");
+  revalidateInvestments();
 }

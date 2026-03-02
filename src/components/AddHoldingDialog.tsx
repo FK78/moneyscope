@@ -14,7 +14,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { addManualHolding, editManualHolding, searchTickers } from "@/db/mutations/investments";
+import { addManualHolding, editManualHolding } from "@/db/mutations/investments";
+import { searchTickers } from "@/db/queries/investments";
 
 type Holding = {
   id: number;

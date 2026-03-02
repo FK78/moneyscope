@@ -35,7 +35,7 @@ export const truelayerConnectionsTable = pgTable("truelayer_connections", {
 export const accountsTable = pgTable("accounts", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   user_id: uuid("user_id").notNull(),
-  name: varchar({ length: 255 }).notNull(),
+  name: text().notNull(),
   type: accountTypeEnum(),
   balance: real().notNull(),
   currency: varchar({ length: 3 }).notNull(),
@@ -57,7 +57,7 @@ export const transactionsTable = pgTable("transactions", {
   category_id: integer("category_id").references(() => categoriesTable.id),
   type: transactionTypeEnum().notNull(),
   amount: real().notNull(),
-  description: varchar({ length: 255 }).notNull(),
+  description: text().notNull(),
   date: date(),
   is_recurring: boolean().notNull(),
   recurring_pattern: recurringPatternEnum("recurring_pattern"),

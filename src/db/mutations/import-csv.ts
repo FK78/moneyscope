@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { eq, sql } from 'drizzle-orm';
 import { getCurrentUserId } from '@/lib/auth';
 import { checkBudgetAlerts } from '@/lib/budget-alerts';
+import { encrypt } from '@/lib/encryption';
 import { matchCategorisationRule } from '@/lib/auto-categorise';
 
 type CsvColumnMapping = {
@@ -188,7 +189,7 @@ export async function importTransactionsFromCSV(
       category_id: categoryId,
       type: row.type,
       amount: row.amount,
-      description: row.description,
+      description: encrypt(row.description),
       date: row.date,
       is_recurring: false,
       recurring_pattern: null,
