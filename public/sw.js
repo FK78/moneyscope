@@ -1,18 +1,25 @@
-const CACHE_NAME = "flowdget-v1";
+const CACHE_NAME = "flowdget-v2";
 
 const PRECACHE_URLS = [
   "/",
-  "/dashboard",
   "/manifest.json",
   "/logo.svg",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-// Install — precache key assets
+// Install — precache key assets (individually so one failure doesn't block install)
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        PRECACHE_URLS.map((url) =>
+          cache.add(url).catch(() => {
+            // Non-critical: skip URLs that fail (e.g. redirects)
+          })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
